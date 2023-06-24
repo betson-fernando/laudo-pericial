@@ -1,0 +1,26 @@
+S1 = [Tipo de elemento balístico]
+
+if [massa] != "" then:
+	if [diametro] != "" then:
+		S2 = ", com massa [massa] g e diâmetro [diametro] mm"
+	else:
+		S2 = ", com massa [massa] g"
+else:
+	if [diametro] != ""
+		S2 = ", com diâmetro [diametro] mm"
+	else:
+		S2 = ""
+
+if ([Tipo de encamisamento original] + [Tipo de ogiva original] != "") and [Tipo de elemento balístico] == "Projétil" then:
+	S2 = ", do tipo" + [Tipo de encamisamento original] + [Tipo de ogiva original]
+else if ([Tipo de encamisamento original] + [Tipo de ogiva original] != "") and [Tipo de elemento balístico] != "Projétil" then:
+	S2 = ", originalmente do tipo" + [Tipo de encamisamento original] + [Tipo de ogiva original]
+else:
+	S2 = ""
+
+if [comp] == "Não" then:
+	S3 = ". Dadas as deformações constatadas, este elemento balístico \textbf{NÃO} é adequado à realização de exames de microcomparação balística."
+else if [comp] == "Parcial" then:
+	S3 = ". Dadas as deformações constatadas, este elemento balístico possui restrita área para a realização de exames de microcomparação balística."
+else if[comp] == "Sim" then:
+	S3 = ". Este elemento balístico é adequado à realização de exames de microcomparação balística."

@@ -1,0 +1,395 @@
+\RequirePackage[2020-02-02]{latexrelease}
+\documentclass[a4paper,12pt,oneside]{article}
+
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{setspace}                                                                        % Permite alterar a separação de linhas
+\usepackage{graphicx}                                                                         % Permite incluir figuras
+\usepackage{float}	  							    % Perminte colocar a figura exatamente onde se quer
+\usepackage[a4paper, total={160mm,222.65mm}, left=30mm, top=10mm]{geometry}                         % Permite alterar margens
+\usepackage{titlesec}
+\usepackage{fancyhdr}                                                                        % Permite editar cabeçalho e rodapé
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}                                                                            % Fonte similar à Arial
+\usepackage[small,bf,hang,justification=justified]{caption}            % Permite alterar legendas. LINHA ACIMA SUBSTITUÍDA POR ESTA.
+\usepackage{calc}                                                               % Permite ajustar legenda à imagem
+\usepackage{enumerate}					       % Permite criar itens
+\usepackage{indentfirst}                                                    % Identar primeiros parágrafos
+\usepackage{etoolbox}                                                       % Apenas para newrobustcmd e ifnumcomp
+\usepackage{xcolor}                                                            % Marcas D'água
+%\usepackage{xwatermark}                                                   % Marcas d'água
+\usepackage{background}                         % Marcas d'água
+\usepackage{lmodern}							% Permite usar o símbolo de graus (°)
+\usepackage{refcount}                           % Para referências ao número de páginas
+
+
+\graphicspath{{../Fotografias/}{../}}          % Buscar figuras nos diretórios selecionados
+
+\titleformat*{\section}{\bf}                      % Alterar formato das sessões para tamanho do texto, negrito.
+\titleformat*{\subsection}{\bf}                 % Alterar formato das subssessões para tamanho do texto, negrito
+\titlelabel{\thetitle.\quad}                         % Formato do título é "X) Nome"
+
+
+\setlength{\abovecaptionskip}{2pt}							 % Ajusta separação figura-legenda
+\setlength{\parindent}{1.5cm}                                                                                % Configura identação.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             MACROS                                                                                        %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<MACROS>
+
+\newcommand{\fig}[3]{       %Novo comando no formado: \fig{fig_name}{captioin}{label}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[height=9 cm]{#1}
+		\settowidth{\imgwidth}{\includegraphics[height=9 cm]{#1}}
+		\captionsetup{width=\imgwidth}
+		\caption{#2}
+		\label{#3}
+	\end{figure}
+}
+
+\newcommand{\f}[2]{\fig{#1.jpg}{#2}{#1}}
+\newcommand{\iml}{Instituto de Medicina Legal Antônio Persivo Cunha (IMLAPC)}
+\newcommand{\igfec}{Instituto de Genética Forense Eduardo Campos (IGFEC) para exame comparação do perfil genético potencialmente presente na(s) amostra(s) com os perfis genéticos de suspeitos que venham a ser elencados pela delegacia responsável pela investigação da ocorrência. Detalhes desta coleta estão descritos no Requerimento de Perícia ao IGFEC, cuja cópia será enviada, para conhecimento da investigação, no mesmo processo SEI que este Laudo Pericial}
+\newcommand{\bal}{Setor de Balística Forense do Instituto de Criminalística Professor Armando Samico e, caso se fizer necessária perícia especializada, a Autoridade Policial deverá encaminhar ofício àquele setor elencando os questionamentos pertinentes}
+
+\newlength{\imgwidth}                     % Para alinhar legendas às imagens
+\newcounter{pgf}			    % Contador para referenciar a página final
+\newcounter{reffig}
+
+
+%ESCREVER POR EXTENSO
+
+\newcounter{c}
+\newcounter{d}
+\newcounter{u}
+\newcommand{\extenso}[1]{%
+	\setcounter{c}{#1/100}%
+	\setcounter{d}{#1-100*\value{c}}
+	\setcounter{d}{\value{d}/10}%
+	\setcounter{u}{#1-100*\value{c}-10*\value{d}}%
+	\ifnumcomp{\value{c}}{=}{1}
+		{\ifnumcomp{\value{d}}{=}{0}
+			{\ifnumcomp{\value{u}}{=}{0}{cem}{cento}}
+		{cento}}
+	{}%
+	\ifnumcomp{\value{c}}{=}{2}{duzentos}{}%
+	\ifnumcomp{\value{c}}{=}{3}{trezentos}{}%
+	\ifnumcomp{\value{c}}{=}{4}{quatrocentos}{}%
+	\ifnumcomp{\value{c}}{=}{5}{quinhentos}{}%
+	\ifnumcomp{\value{c}}{=}{6}{seiscentos}{}%
+	\ifnumcomp{\value{c}}{=}{7}{setecentos}{}%
+	\ifnumcomp{\value{c}}{=}{8}{oitocentos}{}%
+	\ifnumcomp{\value{c}}{=}{9}{novecentos}{}%
+	%--------------------------------------------------------------------------------------------------
+	\ifnumcomp{\value{c}}{>}{0}{\ifnumcomp{\value{d}}{>}{0}{ e}{}}{}%
+	%--------------------------------------------------------------------------------------------------
+	\ifnumcomp{\value{d}}{=}{1}{%
+		\ifnumcomp{\value{u}}{=}{0}{ dez}{}%
+		\ifnumcomp{\value{u}}{=}{1}{ onze}{}%
+		\ifnumcomp{\value{u}}{=}{2}{ doze}{}%
+		\ifnumcomp{\value{u}}{=}{3}{ treze}{}%
+		\ifnumcomp{\value{u}}{=}{4}{ catorze}{}%
+		\ifnumcomp{\value{u}}{=}{5}{ quinze}{}%
+		\ifnumcomp{\value{u}}{=}{6}{ dezesseis}{}%
+		\ifnumcomp{\value{u}}{=}{7}{ dezessete}{}%
+		\ifnumcomp{\value{u}}{=}{8}{ dezoito}{}%
+		\ifnumcomp{\value{u}}{=}{9}{ dezenove}{}%
+	}{}%
+	\ifnumcomp{\value{d}}{=}{2}{ vinte}{}%
+	\ifnumcomp{\value{d}}{=}{3}{ trinta}{}%
+	\ifnumcomp{\value{d}}{=}{4}{ quarenta}{}%
+	\ifnumcomp{\value{d}}{=}{5}{ cinquenta}{}%
+	\ifnumcomp{\value{d}}{=}{6}{ sessenta}{}%
+	\ifnumcomp{\value{d}}{=}{7}{ setenta}{}%
+	\ifnumcomp{\value{d}}{=}{8}{ oitenta}{}%
+	\ifnumcomp{\value{d}}{=}{9}{ noventa}{}%
+	%---------------------------------------------------------------------------------------------------
+	\ifnumcomp{\value{d}}{>}{1}{\ifnumcomp{\value{u}}{>}{0}{ e}{}}{}%
+	\ifnumcomp{\value{c}}{>}{0}{\ifnumcomp{\value{d}}{=}{0}{\ifnumcomp{\value{u}}{>}{0}{ e}{}}{}}{}%
+	%----------------------------------------------------------------------------------------------------
+	\ifnumcomp{\value{d}}{>}{1}{%
+		\ifnumcomp{\value{u}}{=}{1}{ uma}{}%
+		\ifnumcomp{\value{u}}{=}{2}{ duas}{}%
+		\ifnumcomp{\value{u}}{=}{3}{ três}{}%
+		\ifnumcomp{\value{u}}{=}{4}{ quatro}{}%
+		\ifnumcomp{\value{u}}{=}{5}{ cinco}{}%
+		\ifnumcomp{\value{u}}{=}{6}{ seis}{}%
+		\ifnumcomp{\value{u}}{=}{7}{ sete}{}%
+		\ifnumcomp{\value{u}}{=}{8}{ oito}{}%
+		\ifnumcomp{\value{u}}{=}{9}{ nove}{}%
+	}{}%
+	\ifnumcomp{\value{d}}{=}{0}{%
+		\ifnumcomp{\value{u}}{=}{1}{ uma}{}%
+		\ifnumcomp{\value{u}}{=}{2}{ duas}{}%
+		\ifnumcomp{\value{u}}{=}{3}{ três}{}%
+		\ifnumcomp{\value{u}}{=}{4}{ quatro}{}%
+		\ifnumcomp{\value{u}}{=}{5}{ cinco}{}%
+		\ifnumcomp{\value{u}}{=}{6}{ seis}{}%
+		\ifnumcomp{\value{u}}{=}{7}{ sete}{}%
+		\ifnumcomp{\value{u}}{=}{8}{ oito}{}%
+		\ifnumcomp{\value{u}}{=}{9}{ nove}{}%
+	}{}%
+ %
+}
+%===============================================================================================
+
+%============================CONSTRUÇÃO DO CABEÇALHO==========================
+\fancyhf{}                                                                           % Retirar régua do cabeçalho
+\renewcommand{\headrulewidth}{0pt}
+\pagestyle{fancy}
+\voffset=-18.4mm
+\topmargin=0mm
+\headheight=37.5mm
+\headsep=3mm
+
+\lhead{}
+\chead{\includegraphics[width=15.5cm]{Cab.png}}
+\rhead{}
+
+%============================= CONSTRUÇÃO DO RODAPÉ===========================
+\footskip=7.75mm
+
+\cfoot{\fontsize{10}{0} \selectfont {\sl{Laudo Pericial nº \caso{ }- REP nº \rep} \hfill {Página \thepage}}\\\rule{16cm}{2pt}  \\\baselineskip=12pt\bf Rua Doutor João Lacerda, nº 395, bairro do Cordeiro, Recife/ PE – CEP: 50.711-280 \newline Administrativo/ Plantão: (81) 3184-3547 - E-mail: geph.dhpp@gmail.com}
+%=========================================================================
+
+%\newwatermark[allpages,ypos=-55pt]{\includegraphics{Marcadagua.png}}           % Marca d'água
+\backgroundsetup{scale=1, angle=0, opacity=1, position={8cm,-14cm}, contents={\includegraphics[scale=1]{Marcadagua.png}}}
+
+%||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+%||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+\begin{document}
+
+\tableofcontents
+\setcounter{page}{2}
+\newpage
+
+\begin{centering}
+<TÍTULO>
+
+\end{centering}
+
+<HISTORICO>
+
+<OBJETIVO>
+
+<MATERIAIS>
+
+<DESC_LOCAL>
+
+<ISOLAMENTO>
+
+<EXAMES>
+
+
+\section{OUTROS EXAMES}
+
+\subsection{DOS EXAMES PAPILOSCÓPICOS}
+
+Dadas as características do ocorrido e a qualidade das superfícies envolvidas, não foi possível a existência de impressões papilares nos locais imediato e mediato.
+
+\subsection{DOS EXAMES BALÍSTICOS \label{balistica}}
+
+Durante os Exames Periciais, foram encontrados elementos balísticos, que estão listados nas tabelas \ref{est_tab} e \ref{proj_tab}, e numerados segundo as plaquetas que os identificaram no local da ocorrência:
+
+\vspace{18pt}
+\begin{table}[H]
+	\centering
+	\begin{tabular}{ |p{1cm}||p{3.5cm}|p{2cm}|p{1.2cm}|p{3cm}|  }
+		\hline
+		\multicolumn{5}{|c|}{\textbf{Lista de Estojos}} \\
+		\hline
+		Nº placa & Inscrição na base & Arma & Calibre &  Comparação Balística?\\
+		\hline
+		\hline
+		1 & S{\&}W CBC NTA .40 & Pistola & .40 & Sim\\
+		\hline
+		2A & S{\&}W CBC NTA .40 & Pistola & .40 & Sim\\
+		\hline
+		2B & S{\&}W CBC NTA .40 & Pistola & .40 & Sim\\
+		\hline
+		3 & S{\&}W CBC NTA .40 & Pistola & .40 & Sim\\
+		\hline
+		5 & S{\&}W CBC .40 & Pistola & .40 & Sim\\
+		\hline
+		6 & S{\&}W CBC NTA .40 & Pistola & .40 & Sim\\
+		\hline
+		7 & S{\&}W CBC NTA .40 & Pistola & .40 & Sim\\
+		\hline
+		8 & S{\&}W CBC NTA .40 & Pistola & .40 & Sim\\
+		\hline
+		\hline
+	\end{tabular}
+	\caption{Tabela detalhando os estojos encontrados.}
+	\label{est_tab}
+
+	\vspace{18pt}
+	\begin{tabular}{ |p{1cm}||p{1.5cm}|p{2.5cm}|p{1.2cm}|p{1.2cm}| p{1.2cm} | p{2cm} |}
+ 		\hline
+		\multicolumn{7}{|c|}{\textbf{Lista de Projéteis e Fragmentos}}\\
+		\hline
+		Nº placa & Ogiva & Jaqueta & Massa & Arma & Calibre & Comp. Balística?\\
+		\hline
+		\hline
+		1 & Ponta plana & Totalmente encamisado & 11.69g & Pistola & .40 & Sim\\
+		\hline
+	\end{tabular}
+	\caption{Tabela detalhando os projéteis e/ou fragmentos de projéteis encontrados. Uma célula em branco indica uma informação que não pode ser obtida sem perícia especializada.}
+	\label{proj_tab}
+\end{table}
+
+
+A figura \ref{ballab} exibe os elementos balísticos recolhidos, e a numeração presente nesta imagem corresponde à da lista acima, e também à utilizada no local da ocorrência.
+
+%\f{ballab}{Fotografia de elementos balísticos recolhidos no local da ocorrência.}
+
+Estes elementos balísticos foram acondicionados em invólucro plástico, selados termicamente, e serão enviados à Gerência de Custódia de Vestígios da Polícia Científica.
+
+
+\subsection{DOS EXAMES PARA DETECÇÃO DE ENTORPECENTES}
+
+No local da ocorrência foram coletados os seguintes materiais a serem submetidos a análises:
+
+\begin{itemize}
+	\item XXXXXXXXXXXXXXXx, de massa total XXXX g (figura \ref{entorp1});
+	\item XXXXXXXXXXXXXXXXXXXXX, de massa total XXXXXg (figura \ref{entorp2});.
+\end{itemize} 
+
+\f{entorp1}{}
+\f{entorp2}{}
+
+No que concerne ao exame para presença de maconha, realizou este Perito Criminal um teste cromatográfico denominado ``{\sl Cannabispray}'', que é um {\sl kit} de teste {\sl in loco} baseado em aerosol para detecção de marijuana, raxixe, e drogas relacionadas. O teste contém um reagente {\sl Fast Blue BB} modificado. Também foi realizada a identificação botânica, que consiste na utilização de instrumento de aumento (microscópico) para a visualização de caule, folhas, frutos e flores do vegetal {\sl Cannabis Sativa L.} (maconha). Ambos os testes resultaram em \textbf{POSITIVO} para as evidências encontradas. ressaltando que este é um resultado provisório. Caso houver necessidade de um teste laboratorial de confirmação, as amostras deverão ser encaminhadas para o Instituto de Criminalística.
+
+No que concerne ao exame para presença de cocaína, realizou este Perito Criminal um teste cromatográfico denominado ``{\sl Coca - Test}'', que é um {\sl kit} de teste {\sl in loco} baseado em aerosol para detecção de cocaína, {\sl crack} e fenciclidina (PCP). O teste contém um reagente tiocianato de cobalto {\sl(Scott)} modificado. Tal teste resultou em \textbf{POSITIVO} para as evidências encontradas, ressaltando que este é um resultado provisório. Caso houver necessidade de um teste laboratorial de confirmação, as amostras deverão ser encaminhadas para o Instituto de Criminalística.
+
+Este(s) material(materiais) será(serão) encaminhado(s) à Autoridade Policial competente quando da finalização deste Laudo Pericial.
+
+\subsection{DAS COLETAS DE MATERIAL BIOLÓGICO \label{genetica}}
+
+A coleta de material com fulcro na determinação e comparação de perfis genéticos é de suma importância para a determinação de suspeitos, vítimas, e/ou testemunhas. Para tal, são atritados em cada local de interesse pares de {\sl swabs}, um molhado e outro seco, de forma a abranger a máxima área por par, porém utilizando pares distintos em áreas distintas, para manter o potencial de individualização e discernimento dos perfis genéticos a serem recuperados. Então, são colocados ao ar livre para a completa secagem, acondicionados e identificados segundo o(s) local(is) onde foram atritados.
+
+Desta forma, foram realizadas coletas nos seguintes locais (com cada item correspondendo a um par de {\sl swab}):
+
+\begin{itemize}
+	\item Carregadores de pistola;
+	\item Assento e maçanetas externa e interna da porta, todos do lado anterior direito do veículo;
+	\item Assento e maçanetas externa e interna da porta, todos do lado anterior esquerdo do automóvel, além de câmbio e volante;
+	\item Assento e maçanetas externa e interna da porta, todos do lado posterior direito do veículo;
+	\item Assento e maçanetas externa e interna da porta, todos do lado posterior direito do automóvel;
+	\item Deposição de gordura decorrente de contato com uma pessoa no vidro da porta anterior esquerda do veículo;
+	\item Lata de cerveja (especificamente, da tampa, onde normalmente ocorre o contato com a região labial).
+\end{itemize}
+
+Tais {\sl swabs} foram enviados ao \igfec.
+
+%\subsection{NO APARELHO DE TELECOMUNICAÇÃO CELULAR}
+
+%Foi encontrado na sala de estar um aparelho de telecomunicação (celular) de cor XXXX (figuras \ref{cellab1} a \ref{cellab3}), da marca XXXX, modelo XXXX. Em seu interior estavam escritos dois números IMEIs, a saber: XXXXXXXX. Dentro do celular havia XX (XX) bateria, XX (XXX) cartão de memória, e XXX (XXX) {\sl SIM cards} com o logotipo da operadora ``XXXX', e seus números de série eram XXXXXXXXXXXXXXXXXXxxxx.
+
+%\f{cel1}{Fotografia da parte exterior do aparelho de telecomunicação celular.}
+%\f{cel2}{Fotografia da parte exterior do aparelho de telecomunicação celular.}
+%\f{imei}{Fotografia de número(s) IMEI(s) do aparelho de telecomunicação celular.}
+%\f{chip}{Fotografia de {\sl SIM card(s)} inserido(s) no aparelho de telecomunicação celular.}
+%\f{memo}{Fotografia de cartão de memória inserido no aparelho de telecomunicação cleular.}
+
+%Este aparelho foi recolhido pela Equipe Técnica, e foi enviado ao Setor de Informática do Grupo Especializado em Perícias de Homicídios para a remoção dos dispositivos de bloqueio e extração de informações pertinentes ao caso, sendo importante ressaltar a necessidade de ofício solicitando a perícia no referido aparelho, caso houver necessidade de obtenção destas informações por meio de Laudo Pericial específico.
+%Havendo necessidade a ser determinada pelo andamento do inquérito policial, tal aparelho poderá ser encaminhado para o setor de informática no intuito de obter e/ou recuperar as informações presentes no mesmo.
+
+%\subsection{NO VEÍCULO \label{sec:carro}}
+
+%No que concerne ao veículo encontrado, o mesmo estava com as portas fechadas (mas não travadas), e se tratava de um automotor da marca ``Renault'', modelo Sandero, na cor cinza (figuras \ref{car1} a \ref{car4}), de placa PFH-0711, de Recife-PE (ver figuras \ref{placa1} e \ref{placa2}), cujo combustível é o gás natural veicular (GNV), como visto na figura \ref{gas}, na qual se evidencia um cilindro de gás no porta-malas do veículo.
+
+%\f{placa1}{Fotografia exibindo a placa anterior do veículo.}
+%\f{placa2}{Fotografia exibindo a placa posterior do veículo.}
+
+%No veículo foi encontrado o Certificado de Registro e Licenciamento de Veículo (CRLV) relativo ao ano de 2014 (figura \ref{CRLV}), o qual informava que se tratava de um carro ``Renault Sandero EXP 16'', cujo ano do modelo era 2010 e ano de fabricação 2011, placa PFH-0711, de Recife-PE, e número de identificação veicular (NIV) 93YBSR7UHBJ702290, em nome de VINICIUS PAES BARRETO SILVA, C.P.F. 067.893.114-32. É importante salientar que o combustível encontrado no veículo não é condizente com a informação prestada pelo CRLV.
+
+%\f{CRLV}{Fotografia do Certificado de Registro e Licenciamento de Veículo referente ao ano de 2014.}
+
+%No interior do veículo, mais especificamente no assento dianteiro direito, foram encontradas duas embalagens de cigarro e a quantia de cinco (05) reais, como mostra as figuras \ref{item1} e \ref{item2}.
+
+%\f{item1}{Fotografia de itens encontrados no veículo em suas posições originais.}
+%\f{item2}{Detalhes dos itens achados no veículo em lide.}
+
+%Vale salientar a ausência de indícios de luta corporal no veículo, bem como a presença dos itens citados no assento dianteiro indica que tal banco não estava sendo ocupado quando o veículo estacionou no local.
+
+%Tanto o veículo como os itens exibidos ficaram em posse da Autoridade Policial, representada pelo Sr. Delegado já citado, cabendo, portanto, ao mesmo solicitar um exame veicular mais detalhado caso julgar necessário.
+
+
+%\section{CONSIDERAÇÕES TÉCNICO-CIENTÍFICAS}
+
+% A Análise Pericial realizada em local de crime é inerentemente interdisciplinar, envolvendo áreas de conhecimento como a Física, Química, Estatística, Biologia, em um meio frequentemente dialógico. Desta forma, cabe ao Perito Criminal signatário do Laudo Pericial dispor de conhecimento técnico relevante e plural para a identificação, coleta e análise dos vestígios. Desta forma, é mister ressaltar que:
+
+
+%\section{RESUMO DAS EVIDÊNCIAS RECOLHIDAS}
+
+A tabela \ref{encaminhamentos} lista o(s) vestígio(s) recolhido(s) pela Equipe Técnica, e seu(s) respectivo(s) encaminhamento(s):
+
+
+\vspace{18pt}
+\begin{table}[H]
+	\centering
+	\begin{tabular}{ |p{4cm}|p{0.8cm}|p{6cm}|p{3cm}|  }
+		\hline
+		\multicolumn{4}{|c|}{\textbf{Lista de vestígios coletados}} \\
+		\hline
+		Vestígio/Suporte & Qtd. & Descrição & Encaminhamento\\
+		\hline
+		\hline
+		Haste flexível com extremidade de algodão & 2 & Hastes flexíveis com extremidades de algodão contendo sangue encontrado no terraço da residência & IGFEC\\
+		\hline
+		{\sl Swab} & 1 & {\sl Swab} contendo sangue encontrado no banheiro da suíte & IGFEC\\
+		\hline
+		{\sl Swab} & 1 & {\sl Swab} atritado na maçaneta interna e no interruptor da suíte & IGFEC\\
+		\hline
+		{\sl Swab} & 2 & {\sl Swabs} atritados no controle do aparelho condicionador de ar da suíte & IGFEC\\
+		\hline
+		{\sl Swab} & 2 & {\sl Swabs} atritados na mordaça do cadáver & IGFEC\\
+		\hline
+		Óculos de sol & 1 & Óculos de sol encontrado no terraço da residência & IGFEC\\
+		\hline
+		\hline
+	\end{tabular}
+	\caption{Tabela listando o(s) vestígio(s) coletado(s).}
+	\label{encaminhamentos}
+\end{table}
+
+
+
+\section{DISCUSSÃO DA DINÂMICA DO FATO \label{dinamica}}
+
+Analisando minuciosamente as evidências encontradas no local, as lesões no cadáver, e todo o contexto que correlaciona as mesmas, entende o Perito Criminal que:
+
+\begin{itemize}
+	\item Escrever aqui
+
+\end{itemize}
+
+<CONCLUSÕES>
+
+<ENCERRAMENTO>
+
+%\vspace{40pt}
+\centering
+
+%Assinado digitalmente por:
+
+\vspace{75pt}
+\bf
+\rule{300pt}{1.5pt}\\
+Betson Fernando Delgado dos Santos Andrade
+
+Perito Criminal
+
+Matrícula 386.990-3
+\vspace{36pt} %Não remover linha em branco abaixo para não colar o ``Recife, dia de hoje''
+
+\raggedleft Recife, \today.
+
+\label{pagfim}
+\end{document}

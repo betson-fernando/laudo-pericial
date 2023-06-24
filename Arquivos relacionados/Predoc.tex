@@ -1,0 +1,93 @@
+\RequirePackage[2020-02-02]{latexrelease}
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{float}
+
+\usepackage[a4paper,left=30mm,top=30mm,bottom=20mm,right=20mm,showframe]{geometry}
+\usepackage{titlesec}
+
+\usepackage{fancyhdr}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[small,bf,hang,justification=justified]{caption}   TODO: ainda não testei a linha acima, só quando colocar figuras.
+\usepackage{calc}
+\usepackage{enumerate}
+\usepackage{indentfirst}
+
+
+\usepackage{etoolbox} TODO: se possível, excluir este pacote. Tentar ficar livre do newrobustcmd
+
+\usepackage{xcolor}
+\usepackage{xwatermark}
+
+\usepackage{lmodern}% %\usepackage{textcomp}% %\usepackage{lastpage}% %\usepackage[utf8]{inputenc} %\usepackage[T1]{fontenc}
+
+\graphicspath{{../Fotografias/}{../}}          % Buscar figuras nos diretórios selecionados
+
+\titleformat*{\section}{\bf}  %.......................................................................................................................................Alterar formato das sessões para tamanho do texto, negrito.
+\titleformat*{\subsection}{\bf}  %................................................................................................................................Alterar formato das subssessões para tamanho do texto, negrito
+\titlelabel{\thetitle.\quad}  %........................................................................................................................................Formato do título é "X) Nome"
+
+
+%\usepackage{etoolbox}  %......................................................................................................................................Apenas para newrobustcmd e ifnumcomp. GARANTIR QUE NÃO TEM MAIS UTILIDADE
+%\usepackage{anysize}                                % Descobrir para que serve esta package
+%\usepackage{layouts}                                         % Garantir que esta package não tem mais utilidade.
+%\usepackage[svgnames]{xcolor}				        %  Permite alterar as cores do texto (usado somente pra gambiarra de contar figuras, no final do documento)
+%\usepackage{refcount}					       % Permite transformar referências em contadores. GARANTIR QUE NÃO TEM MAIS UTILIDADE PARA REFERÊNCIAS E CONTADORES
+%\geometry{a4paper, total={160mm,222.65mm}, left=30mm, top=10mm}           % Define tamanho do texto e margens. SUBTITUÍDO PELA DEFINIÇÃO DE GEOMETRY
+%\captionsetup{format=hang, justification=justified}                                              % Alinha as linhas da legenda. LINHA EXCLUÍDA. INFORMAÇÕES DIRETO NA DEFINIÇÃO DE CAPTION
+
+
+\setlength{\abovecaptionskip}{2pt}							 % Ajusta separação figura-legenda
+\setlength{\parindent}{1.5cm}                                                                                % Configura identação.
+
+
+
+%Macro para adicionar figura: \f{path.jpg}{legenda}
+\newcommand{\f}[2]{
+    \begin{figure}[H]
+        \centering
+        \includegraphics[height=9 cm]{#1}
+        \settowidth{\imgwidth}{\includegraphics[height=9 cm]{#1}}
+        \captionsetup{width=\imgwidth}
+        \caption{#2}
+        \label{#1}
+    \end{figure}
+}
+
+\newcommand{\f}[2]{\fig{#1}{#2}{#1}}
+\newcommand{\iml}{Instituto de Medicina Legal Antônio Persivo Cunha (IMLAPC)}
+\newcommand{\igfec}{Instituto de Genética Forense Eduardo Campos (IGFEC) para exame comparação do perfil genético potencialmente presente na(s) amostra(s) com os perfis
+genéticos de suspeitos que venham a ser elencadospela delegacia responsável pela investigação da ocorrência. Detalhes desta coleta estão descritos no Requerimento de Perícia ao
+IGFEC, cuja cópia será enviada, para conhecimento da investigação, no mesmo processo SEI que este Laudo Pericial}
+\newcommand{\bal}{Setor de Balística forense do Instituto de Criminalística Professor Armando Samico e, caso se fizer necessária perícia especializada, a Autoridade Policial deverá
+encaminhar ofício àquele setor elencando os questionamentos pertinentes.}
+
+
+\newlength{\imgwidth}                     % Para alinhar legendas às imagens
+\newcounter{pgf}			    % Contador para referenciar a página final
+\newcounter{reffig}
+
+
+%============================CONSTRUÇÃO DO CABEÇALHO==========================
+\fancyhf{}                                                                           % Retirar régua do cabeçalho
+\renewcommand{\headrulewidth}{0pt}
+\pagestyle{fancy}
+\voffset=-18.4mm
+\topmargin=0mm
+\headheight=37.5mm
+\headsep=3mm
+
+\lhead{}
+\chead{\includegraphics[width=15.5cm]{Cab.png}}
+\rhead{}
+
+%============================= CONSTRUÇÃO DO RODAPÉ===========================
+\footskip=7.75mm
+
+\cfoot{\fontsize{10}{0} \selectfont {\sl{Laudo Pericial nº \caso{ }- REP nº \rep} \hfill {Página \thepage}}\\\rule{16cm}{2pt}  \\\baselineskip=12pt\bf Rua Doutor João Lacerda, nº 395, bairro do Cordeiro, Recife/ PE – CEP: 50.711-280 \newline Administrativo/ Plantão: (81) 3184-3547 - E-mail: geph.dhpp@gmail.com}
+%=========================================================================
+
+\newwatermark[allpages,ypos=-55pt]{\includegraphics{Marcadagua.png}}           % Marca d'água

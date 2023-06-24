@@ -1,0 +1,13 @@
+\babel@toc {brazil}{}
+\contentsline {section}{\numberline {1}HISTÓRICO DO CASO}{2}{section.1}%
+\contentsline {section}{\numberline {2}MATERIAL RECEBIDO PARA ANÁLISE}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}APARELHO C1}{2}{subsection.2.1}%
+\contentsline {section}{\numberline {3}DO OBJETIVO PERICIAL}{5}{section.3}%
+\contentsline {section}{\numberline {4}CONSIDERAÇÕES GERAIS}{5}{section.4}%
+\contentsline {section}{\numberline {5}EXAMES}{5}{section.5}%
+\contentsline {subsection}{\numberline {5.1}DOS PROCEDIMENTOS GERAIS}{5}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}DO APARELHO C1}{6}{subsection.5.2}%
+\contentsline {subsubsection}{\numberline {5.2.1}ANÁLISES PRELIMINARES}{6}{subsubsection.5.2.1}%
+\contentsline {subsubsection}{\numberline {5.2.2}PROCESSO DE EXTRAÇÃO}{6}{subsubsection.5.2.2}%
+\contentsline {section}{\numberline {6}CONCLUSÕES}{7}{section.6}%
+\contentsline {section}{\numberline {7}ENCERRAMENTO}{8}{section.7}%

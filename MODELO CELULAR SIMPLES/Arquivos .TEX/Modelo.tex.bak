@@ -1,0 +1,319 @@
+\documentclass[a4paper,12pt,oneside]{article}
+
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{setspace}                                                                        % Permite alterar a separação de linhas
+\usepackage{graphicx}                                                                         % Permite incluir figuras
+\usepackage{float}	  							    % Perminte colocar a figura exatamente onde se quer
+\usepackage{anysize}
+\usepackage{geometry}                                                                       % Permite alterar margens
+\usepackage{titlesec}
+\usepackage{layouts}
+\usepackage{fancyhdr}                                                                        % Permite editar cabeçalho e rodapé
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}                                                                            % Fonte similar à Arial
+\usepackage[margin=10pt,font=small,labelfont=bf]{caption}            % Permite alterar legendas
+\usepackage{calc}                                                               % Permite ajustar legenda à imagem
+\usepackage{enumerate}					       % Permite criar itens
+\usepackage{indentfirst}                                                    % Identar primeiros parágrafos
+\usepackage{hyperref}                                                       % Coloca links da internet
+\usepackage[svgnames]{xcolor}				        % Permite alterar as cores do texto (usado somente pra gambiarra de contar figuras, no final do documento)
+\usepackage{etoolbox}                                                       % Pacote com uma série de comandos redefinidos e mais "smarts" 
+\usepackage{refcount}					       % Permite transformar referências em contadores.
+\usepackage{xcolor}                                                            % Marcas D'água
+\usepackage{xwatermark}                                                   % Marcas d'água
+\usepackage{ulem}                                                               % Apenas para quebrar linha do underline
+\usepackage{lmodern}							% Permite usar o símbolo de graus (°)
+
+\graphicspath{{../Fotografias/}{../}{../../../}}          % Buscar figuras nos diretórios selecionados
+
+\titleformat*{\section}{\bf}                      % Alterar formato das sessões para tamanho do texto, negrito.
+\titleformat*{\subsection}{\bf}                 % Alterar formato das subssessões para tamanho do texto, negrito
+\titlelabel{\thetitle.\quad}                         % Formato do título é "X) Nome"
+
+
+\geometry{a4paper, total={160mm,222.65mm}, left=30mm, top=10mm}           % Define tamanho do texto e margens.
+\captionsetup{format=hang, justification=justified}                                              % Alinha as linhas da legenda.
+\deflength{\abovecaptionskip}{2pt}							 % Ajusta separação figura-legenda
+\deflength{\parindent}{1.5cm}                                                                                % Configura identação.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                             MACROS                                                                                        %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newrobustcmd{\aparelho}{TELEFONE CELULAR MÓVEL} %Tipo de aparelho submetido a perícia
+\newrobustcmd{\caso}{158.12/2017}
+\newrobustcmd{\rep}{1125/2018}
+\newrobustcmd{\of}{9043.01.000072/2017}
+\newrobustcmd{\dataof}{30/10/2017}
+\newrobustcmd{\perito}{BETSON FERNANDO DELGADO DOS SANTOS ANDRADE}
+\newrobustcmd{\del}{FABIANA FERREIRA LEANDRO}   %Delegado
+\newrobustcmd{\dataciente}{24/08/2020}
+\newrobustcmd{\datainicio}{24/08/2020}   %Data de início da análise
+\newrobustcmd{\sei}{8891723-2/2017}
+\newrobustcmd{\orig}{9ª Delegacia de Polícia de Homicídios - Metropolitana Norte (9ª DPH - DHMN)}    % Delegacia de origem da solicitação
+
+\newrobustcmd{\sistop}{Android}    %Sistema operacional do celular
+\newrobustcmd{\marca}{Samsung}    
+\newrobustcmd{\modelo}{SM - J500M/DS}
+\newrobustcmd{\cor}{preta}
+\newrobustcmd{\imeis}{352525087847455 e 352600087847456}
+\newrobustcmd{\iccidA}{8955313929 891177965}
+\newrobustcmd{\opA}{Oi}   % Operadora do chip A
+\newrobustcmd{\iccidB}{}    
+\newrobustcmd{\opB}{}       % Operadora do chip B
+\newrobustcmd{\tamanhocartao}{MicroSim}
+
+\newrobustcmd{\tamout}{}
+\newrobustcmd{\nomeout}{}
+
+
+\newrobustcmd{\fig}[3]{       %Novo comando no formado: \fig{fig_name}{captioin}{label}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[height=9 cm]{#1}
+		\settowidth{\imgwidth}{\includegraphics[height=9 cm]{#1}}
+		\captionsetup{width=\imgwidth}
+		\caption{#2}
+		\label{#3}
+	\end{figure}
+}
+
+\newrobustcmd{\f}[2]{\fig{#1}{#2}{#1}}
+
+\newlength{\imgwidth}                     % Para alinhar legendas às imagens
+\newcounter{pgf}			    % Contador para referenciar a página final
+\newcounter{reffig}
+
+
+%ESCREVER POR EXTENSO
+
+\newcounter{c}
+\newcounter{d}
+\newcounter{u}
+\newrobustcmd{\extenso}[1]{%
+	\setcounter{c}{#1/100}%
+	\setcounter{d}{#1-100*\value{c}}
+	\setcounter{d}{\value{d}/10}%
+	\setcounter{u}{#1-100*\value{c}-10*\value{d}}%
+	\ifnumcomp{\value{c}}{=}{1}
+		{\ifnumcomp{\value{d}}{=}{0}
+			{\ifnumcomp{\value{u}}{=}{0}{cem}{cento}}
+		{cento}}
+	{}%
+	\ifnumcomp{\value{c}}{=}{2}{duzentos}{}%
+	\ifnumcomp{\value{c}}{=}{3}{trezentos}{}%
+	\ifnumcomp{\value{c}}{=}{4}{quatrocentos}{}%
+	\ifnumcomp{\value{c}}{=}{5}{quinhentos}{}%
+	\ifnumcomp{\value{c}}{=}{6}{seiscentos}{}%
+	\ifnumcomp{\value{c}}{=}{7}{setecentos}{}%
+	\ifnumcomp{\value{c}}{=}{8}{oitocentos}{}%
+	\ifnumcomp{\value{c}}{=}{9}{novecentos}{}%
+	%--------------------------------------------------------------------------------------------------
+	\ifnumcomp{\value{c}}{>}{0}{\ifnumcomp{\value{d}}{>}{0}{ e}{}}{}%
+	%--------------------------------------------------------------------------------------------------
+	\ifnumcomp{\value{d}}{=}{1}{%
+		\ifnumcomp{\value{u}}{=}{0}{ dez}{}%
+		\ifnumcomp{\value{u}}{=}{1}{ onze}{}%
+		\ifnumcomp{\value{u}}{=}{2}{ doze}{}%
+		\ifnumcomp{\value{u}}{=}{3}{ treze}{}%
+		\ifnumcomp{\value{u}}{=}{4}{ catorze}{}%
+		\ifnumcomp{\value{u}}{=}{5}{ quinze}{}%
+		\ifnumcomp{\value{u}}{=}{6}{ dezesseis}{}%
+		\ifnumcomp{\value{u}}{=}{7}{ dezessete}{}%
+		\ifnumcomp{\value{u}}{=}{8}{ dezoito}{}%
+		\ifnumcomp{\value{u}}{=}{9}{ dezenove}{}%
+	}{}%
+	\ifnumcomp{\value{d}}{=}{2}{ vinte}{}%
+	\ifnumcomp{\value{d}}{=}{3}{ trinta}{}%
+	\ifnumcomp{\value{d}}{=}{4}{ quarenta}{}%
+	\ifnumcomp{\value{d}}{=}{5}{ cinquenta}{}%
+	\ifnumcomp{\value{d}}{=}{6}{ sessenta}{}%
+	\ifnumcomp{\value{d}}{=}{7}{ setenta}{}%
+	\ifnumcomp{\value{d}}{=}{8}{ oitenta}{}%
+	\ifnumcomp{\value{d}}{=}{9}{ noventa}{}%
+	%---------------------------------------------------------------------------------------------------
+	\ifnumcomp{\value{d}}{>}{1}{\ifnumcomp{\value{u}}{>}{0}{ e}{}}{}%
+	\ifnumcomp{\value{c}}{>}{0}{\ifnumcomp{\value{d}}{=}{0}{\ifnumcomp{\value{u}}{>}{0}{ e}{}}{}}{}%
+	%----------------------------------------------------------------------------------------------------
+	\ifnumcomp{\value{d}}{>}{1}{%
+		\ifnumcomp{\value{u}}{=}{1}{ uma}{}%
+		\ifnumcomp{\value{u}}{=}{2}{ duas}{}%
+		\ifnumcomp{\value{u}}{=}{3}{ três}{}%
+		\ifnumcomp{\value{u}}{=}{4}{ quatro}{}%
+		\ifnumcomp{\value{u}}{=}{5}{ cinco}{}%		\ifnumcomp{\value{u}}{=}{6}{ seis}{}%
+		\ifnumcomp{\value{u}}{=}{7}{ sete}{}%
+		\ifnumcomp{\value{u}}{=}{8}{ oito}{}%
+		\ifnumcomp{\value{u}}{=}{9}{ nove}{}%
+	}{}%
+	\ifnumcomp{\value{d}}{=}{0}{%
+		\ifnumcomp{\value{u}}{=}{1}{ uma}{}%
+		\ifnumcomp{\value{u}}{=}{2}{ duas}{}%
+		\ifnumcomp{\value{u}}{=}{3}{ três}{}%
+		\ifnumcomp{\value{u}}{=}{4}{ quatro}{}%
+		\ifnumcomp{\value{u}}{=}{5}{ cinco}{}%
+		\ifnumcomp{\value{u}}{=}{6}{ seis}{}%
+		\ifnumcomp{\value{u}}{=}{7}{ sete}{}%
+		\ifnumcomp{\value{u}}{=}{8}{ oito}{}%
+		\ifnumcomp{\value{u}}{=}{9}{ nove}{}%
+	}{}%
+ %
+}
+%===============================================================================================
+
+%============================CONSTRUÇÃO DO CABEÇALHO==========================
+\fancyhf{}                                                                           % Retirar régua do cabeçalho
+\renewrobustcmd{\headrulewidth}{0pt}
+\pagestyle{fancy}
+\voffset=-18.4mm
+\topmargin=0mm
+\headheight=37.5mm
+\headsep=3mm
+
+\lhead{}
+\chead{\includegraphics[width=15.5cm]{Cab.png}}
+\rhead{}
+
+%============================= CONSTRUÇÃO DO RODAPÉ===========================
+\footskip=7.75mm
+
+\cfoot{\fontsize{10}{0} \selectfont {\sl{Laudo Pericial nº \caso - REP nº \rep} \hfill {Página \thepage}}\\\rule{16cm}{2pt}  \\\baselineskip=12pt\bf Rua Doutor João Lacerda, nº 395, bairro do Cordeiro, Recife/ PE – CEP: 50.711-280 \newline Administrativo/ Plantão: (81) 3184-3547 - E-mail: geph.dhpp@gmail.com}
+%=========================================================================
+
+\newwatermark[allpages,ypos=-55pt]{\includegraphics{Marcadagua.png}}           % Marca d'água
+
+%||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+%||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+\begin{document}
+
+\tableofcontents
+\newpage
+
+\begin{centering}
+\centering \noindent \textbf{\emph{LAUDO PERICIAL EM EQUIPAMENTOS ELETRÔNICOS\\(\aparelho)\\CASO Nº\caso\, - REP Nº\rep}}
+
+\end{centering}
+
+
+\section{HISTÓRICO DO CASO}
+
+Foi recebido e protocolado pelo Setor Administrativo do Grupo Especializado em Perícias de Homicídios (GEPH), o ofício nº \of, datado de \dataof, incluso no processo SIGEPE nº \sei, oriundo da \orig, a pedido do(a) Delegado(a) de Polícia \del, solicitando Perícia em equipamento eletrônico - aparelho de telefonia móvel, ao Setor de Meios Informáticos e Equipamentos Eletrônicos do GEPH, conforme cópia em anexo. Em \datainicio, portanto, o chefe deste setor exarou despacho designando o Perito Criminal \perito para proceder ao respectivo exame solicitado e confeccionar o respectivo laudo.
+
+\section{MATERIAL RECEBIDO PARA ANÁLISE}
+
+\subsection{APARELHO C1}
+
+Tratava-se de um aparelho de telecomunicação celular de marca \marca, modelo \modelo, cor \cor, IMEI(s) \imeis, contendo, em seu interior:
+
+\begin{itemize}
+	\item Bateria;
+	\item {\sl SIM card}, denominado SC1, da operadora "\opA"{ }e número ICCID \iccidA.
+\end{itemize}
+
+A(s) figura(s) abaixo exibe(m) os itens acima listados, 
+%à exceção da bateria, que não pode ser removida por se tratar de um aparelho selado.
+
+\f{cel1.jpg}{Fotografia dos equipamentos relativos ao aparelho C1.}
+\f{cel2.jpg}{Fotografia dos equipamentos relativos ao aparelho C1.}
+\f{cel3.jpg}{Fotografia dos equipamentos relativos ao aparelho C1.}
+%\f{cel4.jpg}{Fotografia dos equipamentos relativos ao aparelho C1.}
+%\f{cel5.jpg}{Fotografia dos equipamentos relativos ao aparelho C1.}
+%\f{cel6.jpg}{Fotografia dos equipamentos relativos ao aparelho C1.}
+\f{celfim.jpg}{Fotografia dos equipamentos relativos ao aparelho C1.}
+
+
+\section{DO OBJETIVO PERICIAL}
+
+A perícia tem a finalidade de verificar o estado em que os equipamentos se encontram, bem como de extrair dados encontrados na memória dos dispositivos eletrônicos encaminhados para perícia, visando responder aos quesitos do ofício supracitado.
+
+\section{CONSIDERAÇÕES GERAIS}
+
+Com fulcro na correta interpretação dos exames e análises por parte do leitor deste trabalho técnico, se faz necessário realizar algumas observações, a saber:
+
+\begin{itemize}
+
+	\item Datas e horários listados a seguir correspondem aos dados armazenados na memória dos aparelhos. Esses dados só correspondem à realidade se o relógio e o calendário do equipamento estiverem devidamente ajustados no momento das respectivas mensagens/ligações;
+	\item Os históricos de mensagens e de chamadas, bem como arquivos de imagens e de vídeos, podem ser apagados pelo usuário. Nem todos os dados apagados que são recuperados pelas técnicas forenses estão íntegros, pois podem estar totalmente ou parcialmente corrompidos;
+	\item Arquivos apagados nem sempre são restaurados em sua totalidade;
+	\item Não disponho de elementos materiais para informar se o aparelho recebido para análise foi objeto de roubo ou furto. Esta informação pode ser obtida pela autoridade policial, junto ao CEMI – Cadastro de Estações Móveis Impedidas;
+	\item Através do código IMSI é possível identificar, junto à operadora telefônica, o assinante da linha. Já o ICCID representa o número de identidade do cartão SIM usado no parelho;
+	\item Para a identificação dos arquivos digitais, são utilizadas as Somas de Verificação, que são assinaturas digitais (sequências alfanuméricas) obtidas através de algoritmos (MD5 e SHA1), que resultam numa identificação única;
+	\item O equipamento recebido para exames segue com o Laudo Pericial.
+
+\end{itemize}
+
+\section{EXAMES}
+
+\subsection{DOS PROCEDIMENTOS GERAIS}
+
+O exame em aparelho celular móvel inicia primeiramente com uma higienização através de material absorvente embebido em etanol. Concluída esta etapa, é realizada uma inspeção visual para verificar sua integridade física e observar se o mesmo encontra-se apto para uso. Além disso, é verificado se a bateria está em boas condições de uso e se possui energia suficiente para manter o aparelho operante e dar continuidade ao exame. Caso não possua energia, será usado um carregador especifico para carregá-la. Por último, caso o celular não acompanhe a bateria de fábrica, ele será conectado a um cabo específico fornecido pelo pacote forense UFED.
+
+Após essa etapa de preparação do aparelho, é iniciado o processo de extração dos dados armazenados, que consiste em submeter o dispositivo à análise por equipamento ou {\sl software} forense adequado, visando obter o máximo de dados possível, e consequentemente dar luz aos quesitos elaborados pela autoridade. A extração é capaz de obter dados como: bate-papos (Whatsapp, Facebook Messenger, Instagram, entre outros), contatos, registro de chamadas, {\sl e-mails}, histórico da web, locais do dispositivo, mensagens SMS, redes sem fio conectadas, registro de chamadas, imagens, vídeos, áudios, etc. Além disso, arquivos apagados podem ser recuperados em determinados casos, uma vez que a recuperação de arquivos é feita em espaços ainda não alocados, e à medida que novos arquivos são criados, tais espaços são ocupados, sobrescrevendo os dados anteriores, e deste modo dificultando a recuperação de informações apagadas. O êxito da extração dos dados depende de diversos fatores, tais como: aparelho bloqueado/desbloqueado, versão do sistema operacional, {\sl patch} de segurança, tipo do sistema operacional (iOS, Android, etc.), fabricante, dentre outros. Recomenda-se que o celular encaminhado esteja desbloqueado, ou que seja informado o padrão/senha/PIN de desbloqueio, pois alguns algoritmos criptográficos usados nos aparelhos atuais não são possíveis de superar, prejudicando o exame pericial.
+
+Por fim, uma vez realizada a extração, um relatório será gerado com o conteúdo de interesse solicitado no ofício e encaminhado por mídia anexa ao Laudo Pericial.
+
+\subsection{DO APARELHO C1}
+
+\subsubsection{ANÁLISES PRELIMINARES}
+
+Ao ser iniciada a análise no referido aparelho, não foi observada a existência de avarias à mera inspeção externa.
+ Após executado o processo de ligar o aparelho, foi constatado ele se encontrava 
+ em regular estado de operação.
+% com suas funcionalidades operando parcialmente, em decorrência de ...
+% inoperante, em face de .... motivo pelo qual a análise neste equipamento foi encerrada.
+ Também foi verificado que seu sistema operacional era o \sistop, e se encontrava 
+ em modo avião, segundo as recomendações para a preservação da cadeia de custódia.
+% habilitado à comunicação com a rede externa (modo avião desligado), indo de encontro às recomendações para a preservação da cadeia de custódia.
+
+\subsubsection{PROCESSO DE EXTRAÇÃO}
+
+Seguiu-se, então, à extração e análise do aparelho C1, através do Equipamento UFED Touch, da empresa Cellebrite. Foram realizadas tentativas de extração, segundo o descrito a seguir:
+
+\begin{enumerate}
+	\item No aparelho C1 (extração física);
+	\item No {\sl SIM card} SC1 (extração lógica).
+\end{enumerate}
+
+Como resultado da extração, foram gerados dois arquivos:
+
+\begin{itemize}
+	\item Relatório completo da extração, em formato PDF, com tamanho 60 MB, e nome "\textbf{Relatório.pdf}";
+	%\item Diálogos obtidos do Whatsapp, em formato HTML, com nome "\textbf{Whatsapp.html}", organizado de forma a simplificar a visualização destes diálogos. Entretanto, enfatiza-se que o conteúdo seja utilizado apenas para análises e que referências devem ser feitas a partir do arquivo "Relatório.pdf", certificado digitalmente;
+	\item Aplicativo UFEDReader, que sistematiza dos dados de forma a criar um ambiente de leitura e análise facilitado.
+\end{itemize}
+
+\section{CONCLUSÕES}
+
+Diante dos exames realizados e de tudo o quanto foi exposto, conclui-se que a perícia no(s) aparelho(s) de telefonia móvel [celular(es)] remetido(s) para análise produziu resultados, sendo estes gravados em dois arquivos, sendo o primeiro em formato PDF, com tamanho \tamout, e nome "Relatório.pdf", e o segundo, um aplicativo de nome "UFEDReader", que sistematiza as informações e os dados encontrados de forma a facilitar a análise. Estes dois arquivos, bem como pastas e outros arquivos extraídos, serão enviados à delegacia em mídia digital (DVD) que também conterá este Laudo Pericial.
+
+É importante mencionar que a quantidade e a qualidade dos dados extraídos nas perícias em aparelhos eletrônicos está diretamente ligada ao nível de segurança que o item apresenta. Com isto, recomenda-se que, ao solicitar as perícias, quando possível, enviar junto ao aparelhos  informações pertinentes, como senhas de bloqueio e nome do proprietário. A ausência de tais informações, aliada ao fato de os equipamentos forenses deste Instituto de Criminalística estarem desatualizados, influencia diretamente nos resultados obtidos.
+
+\newpage
+\section{ENCERRAMENTO}
+
+\setcounterpageref{pgf}{pagfim}
+\setcounterref{reffig}{figure}
+Eu, {\bf \perito}, Perito Criminal deste Instituto de Criminalística no GEPH/DHPP, confeccionei o presente {\bf LAUDO PERICIAL EM EQUIPAMENTOS ELETRÔNICOS (\aparelho)}, consistindo de arquivo digital em formato pdf, certificado em meio digital (Certificado ICP - Brasil), possuindo\extenso{\value{figure}} (\thefigure) figuras com legendas explicativas, e \extenso{\value{pgf}}(\thepgf) páginas à exceção da capa, em tamanho oficial, encimadas pelo timbre do Estado de Pernambuco. É importante mencionar que versões impressas deste documento equivalem a cópias não autenticadas, visto que somente o arquivo PDF contém a assinatura digital passível de verificação e validação por uma Autoridade Certificadora.
+
+Segue em mídia tipo DVD o Laudo Pericial em tela, além dos dados extraídos e organizados em relatório digital.
+
+SECRETARIA DE DEFESA SOCIAL – GERÊNCIA GERAL DE POLÍCIA CIENTÍFICA – INSTITUTO DE CRIMINALÍSTICA PROFESSOR ARMANDO SAMICO – GRUPO ESPECIALIZADO EM PERÍCIAS DE HOMICÍDIOS (GEPH)-DO IC - DHPP.
+
+%\vspace{40pt}
+\centering
+
+%Assinado digitalmente por:
+
+\vspace{75pt}
+\bf
+\rule{300pt}{1.5pt}\\
+Betson Fernando Delgado dos Santos Andrade\\Perito Criminal\\Matrícula 386.990-3
+\vspace{36pt} %Não remover linha em branco abaixo para não colar o ``Recife, dia de hoje''
+
+\raggedleft Recife, \today.
+
+\label{pagfim}
+\end{document}
