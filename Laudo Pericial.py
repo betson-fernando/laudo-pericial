@@ -13,6 +13,7 @@ import numpy as np
 import urllib.request as urlreq
 import urllib.error as urlerr
 from zipfile import BadZipFile
+from Classes.Local import Local
 
 SCRIPT_PATH = os.path.realpath(os.path.dirname(__file__))
 
@@ -291,8 +292,6 @@ def macro(name: str, value) -> str:
     r"""Esta função gera uma linha de macro segundo o padrão do Latex: "\newrobustcmd{\[macro_name]}{[macro_value]}".
     Ainda, se o argumento (macro_value) for vazio, insere o símbolo "%" para manter a linha inativa no Latex."""
 
-    # res = "" # TODO: excluir se não for mais necessário
-
     if value.__len__() == 1:
         res = f"\\newcommand{{\\{name}}}{{{fmt_values(value.iloc[0])}}}\n"
         if value.iloc[0] == "":
@@ -406,6 +405,8 @@ if row_base.empty:
 # DADOS DA PLANILHA PREENCHIDA NA BASE:
 
 # OBS.: NO FUTURO, SE FICAR PROIBIDO FAZER "row_base[<str>].iloc[<int>]", posso usar "row_base.loc[<int>, <str>]".
+
+local = Local(1, (row_base['lat'].iloc[0], row_base['lon'].iloc[0]), row_base['municipio'].iloc[0], row_base['bairro'].iloc[0], row_base['rua'].iloc[0])
 tipoExame = row_base['tipoexame']
 caso = row_base['index']
 rep = row_base['rep']
@@ -414,13 +415,13 @@ req = row_base['req']
 aux = row_base['aux']
 delegado = row_base['delegado']
 vtPericia = row_base['vtPericia']
-coord = row_base['lat'] + ', ' + row_base['lon']
+#coord = row_base['lat'] + ', ' + row_base['lon']
 horaCiente = row_base['horaCiente']
 horaInicio = row_base['horaInicio']
 horaFim = row_base['horaFim']
-rua = row_base['rua']
-bairro = row_base['bairro']
-municipio = row_base['municipio']
+#rua = row_base['rua']
+#bairro = row_base['bairro']
+#municipio = row_base['municipio']
 
 dataCiente = dataPlant
 # TODO: TESTAR PARA HORÁRIOS DE MADRUGADA PARA ENTRAR NESSE IF E VER SE FUNCIONA = 1
@@ -434,15 +435,15 @@ dataCienteRes = fmt_values(dataCiente.iloc[0])
 reqRes = fmt_values(req.iloc[0])
 auxRes = fmt_values(aux.iloc[0])
 delegadoRes = macro("delegado", delegado)
-coordRes = macro("coord", coord)
+#coordRes = macro("coord", coord)
 horaCienteRes = fmt_values(horaCiente.iloc[0])
 horaInicioRes = fmt_values(horaInicio.iloc[0])
 horaFimRes = fmt_values(horaFim.iloc[0])
-ruaRes = macro("rua", rua)
-bairroRes = macro("bairro", bairro)
-municipioRes = macro("municipio", municipio)
+#ruaRes = macro("rua", rua)
+#bairroRes = macro("bairro", bairro)
+#municipioRes = macro("municipio", municipio)
 
-string_base = casoRes + repRes + delegadoRes + coordRes + ruaRes + bairroRes + municipioRes
+string_base = casoRes + repRes + delegadoRes + local.toTex()
 
 download_sheet(tab_form_url, tab_form_path, True)
 
@@ -463,6 +464,7 @@ matPmRes = macro("matPM", matPm)
 batPMRes = macro("batPM", batPM)
 
 string_info = nomePmRes + matPmRes + batPMRes
+
 
 # INSERIR AS VÍTIMAS -------------------------------------------------------------------------------------------------------------------
 string_vit = ""
