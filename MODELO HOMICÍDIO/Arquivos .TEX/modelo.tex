@@ -1,4 +1,3 @@
-\RequirePackage[2020-02-02]{latexrelease}
 \documentclass[a4paper,12pt,oneside]{article}
 
 \usepackage[brazil]{babel}
@@ -17,11 +16,10 @@
 \usepackage{indentfirst}                                                    % Identar primeiros parágrafos
 \usepackage{etoolbox}                                                       % Apenas para newrobustcmd e ifnumcomp
 \usepackage{xcolor}                                                            % Marcas D'água
-%\usepackage{xwatermark}                                                   % Marcas d'água
 \usepackage{background}                         % Marcas d'água
 \usepackage{lmodern}							% Permite usar o símbolo de graus (°)
 \usepackage{refcount}                           % Para referências ao número de páginas
-
+\usepackage{comment}           % REMOVER QUANDO AS INFORMAÇÕES ESTIVEREM DISPONÍVEIS EM UMA GUI!!
 
 \graphicspath{{../Fotografias/}{../}}          % Buscar figuras nos diretórios selecionados
 
@@ -40,6 +38,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 <MACROS>
+<INFO>
 
 \newcommand{\fig}[3]{       %Novo comando no formado: \fig{fig_name}{captioin}{label}
 	\begin{figure}[H]
@@ -156,9 +155,8 @@
 
 \cfoot{\fontsize{10}{0} \selectfont {\sl{Laudo Pericial nº \caso{ }- REP nº \rep} \hfill {Página \thepage}}\\\rule{16cm}{2pt}  \\\baselineskip=12pt\bf Rua Doutor João Lacerda, nº 395, bairro do Cordeiro, Recife/ PE – CEP: 50.711-280 \newline Administrativo/ Plantão: (81) 3184-3547 - E-mail: geph.dhpp@gmail.com}
 %=========================================================================
-
-%\newwatermark[allpages,ypos=-55pt]{\includegraphics{Marcadagua.png}}           % Marca d'água
-\backgroundsetup{scale=1, angle=0, opacity=1, position={8cm,-14cm}, contents={\includegraphics[scale=1]{Marcadagua.png}}}
+    
+\backgroundsetup{scale=1, angle=0, opacity=1, position={8cm,-14cm}, contents={\includegraphics[scale=1]{Marcadagua.png}}} % Marca d'água
 
 %||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 %||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
