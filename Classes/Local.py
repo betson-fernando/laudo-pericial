@@ -3,8 +3,8 @@ from os import path
 import requests
 import numpy as np
 import re
-from string import Template
-from GlobalFuncs.funcs import testNumber, testEmpty
+from textwrap import dedent
+from globalfuncs.funcs import testNumber, testEmpty
 
 sys.path.insert(0, r'C:\Users\GEPH-IC\Documents\Betson\Laudo Pericial')
 import configs
@@ -42,7 +42,7 @@ class Local():
             for item in coord:
                 assert isinstance(item, str)
         except (ValueError, AssertionError):
-            sys.exit("AS coordenadas não foram digitadas da forma correta.\nO argumento deve ser uma tupla de duas strings de números float, com separador decimal de ponto (\".\").\nO programa será encerrado.")
+            sys.exit("As coordenadas não foram digitadas da forma correta.\nO argumento deve ser uma tupla de duas strings de números float, com separador decimal de ponto (\".\").\nO programa será encerrado.")
         else:
             lat = testNumber("latitude", coord[0])
             lon = testNumber("longitude", coord[1])
@@ -87,17 +87,22 @@ class Local():
     def info(self):
         """Retorna informações do local.
         Este método não tem entradas, e o retorno é uma string.."""
-        
-        return f"Informações do local:\nEndereço: {self.rua + ',' if self.rua != '' else ''} {self.bairro}, {self.municipio} - PE\nCoordenadas: lat={lat}, long={long}\nTipo de local: {tipo}.\n"
+        lat, long = self.coord
+        return dedent(f"""
+                Informações do local:
+                Endereço: {self.rua + ',' if self.rua != '' else ''} {self.bairro}, {self.municipio} - PE
+                Coordenadas: lat={lat}, long={long}
+                Tipo de local: {self.tipo}.
+                """)
     
     
-    def toTex(self):
-        """Retorna uma string pronta para aplicação no arquivo tex"""
+    #def toTex(self):
+    #    """Retorna uma string pronta para aplicação no arquivo tex"""
         
-        t = Template(r"\newcommand{$key}{$value}" +"\n")
-        return t.substitute(key=r"\rua", value=self.rua) + \
-               t.substitute(key=r"\bairro", value=self.bairro) + \
-               t.substitute(key=r"\municipio", value=self.municipio) + \
-               t.substitute(key=r"\coord", value=f"{self.coord[0]}, {self.coord[1]}")
+        #t = Template(r"\newcommand{$key}{$value}" +"\n")
+        #return t.substitute(key=r"\rua", value=self.rua) + \
+        #       t.substitute(key=r"\bairro", value=self.bairro) + \
+        #       t.substitute(key=r"\municipio", value=self.municipio) + \
+        #       t.substitute(key=r"\coord", value=f"{self.coord[0]}, {self.coord[1]}")
                
 

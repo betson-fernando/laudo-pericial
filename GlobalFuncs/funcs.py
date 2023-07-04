@@ -29,3 +29,19 @@ def testEmpty(name, value):
         value = input(f"O campo '{name}' não foi preenchido. Digite-o: ")
     
     return value
+
+def textbf(string):
+    """Esta função coloca um texto em negrito no Latex."""
+    return r"\textbf{" + str(string) + "}"
+    
+def ref(string):
+    """Esta função insere uma referência no Latex."""
+    return r"\ref{" + str(string) + "}"
+    
+def fig(fileName, caption):
+    """Esta função insere uma figura (conforme macro definida especificamente para meu latex.
+    Entradas:
+        --> fileName(str): Nome do arquivo, sem extensão (subtende-se '.jpg', e o arquivo deve ter este formato);
+        --> caption(str): Legenda.
+    """
+    return r"\f{" + str(fileName) + "}{" + str(caption) + "}"

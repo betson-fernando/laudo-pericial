@@ -3,7 +3,7 @@ from tkinter import filedialog
 import pandas as pd
 from datetime import datetime, timedelta, time, date
 import monthdelta
-
+import sys
 import shutil
 import os
 import re
@@ -13,7 +13,11 @@ import numpy as np
 import urllib.request as urlreq
 import urllib.error as urlerr
 from zipfile import BadZipFile
+
+sys.path.insert(0, r'C:\Users\GEPH-IC\Documents\Betson\Laudo Pericial')
 from Classes.Local import Local
+from globalfuncs.funcs import textbf, ref, fig
+import configs
 
 SCRIPT_PATH = os.path.realpath(os.path.dirname(__file__))
 
@@ -406,7 +410,7 @@ if row_base.empty:
 
 # OBS.: NO FUTURO, SE FICAR PROIBIDO FAZER "row_base[<str>].iloc[<int>]", posso usar "row_base.loc[<int>, <str>]".
 
-local = Local(1, (row_base['lat'].iloc[0], row_base['lon'].iloc[0]), row_base['municipio'].iloc[0], row_base['bairro'].iloc[0], row_base['rua'].iloc[0])
+locais = [Local(1, (row_base['lat'].iloc[0], row_base['lon'].iloc[0]), row_base['municipio'].iloc[0], row_base['bairro'].iloc[0], row_base['rua'].iloc[0], row_base['tipoLocal'].iloc[0])]
 tipoExame = row_base['tipoexame']
 caso = row_base['index']
 rep = row_base['rep']
@@ -443,7 +447,7 @@ horaFimRes = fmt_values(horaFim.iloc[0])
 #bairroRes = macro("bairro", bairro)
 #municipioRes = macro("municipio", municipio)
 
-string_base = casoRes + repRes + delegadoRes + local.toTex()
+string_base = casoRes + repRes + delegadoRes
 
 download_sheet(tab_form_url, tab_form_path, True)
 
@@ -592,6 +596,11 @@ if tipoExameRes == "ossada":
 
 titulo = r"\centering \noindent \textbf{\emph{" + tipoExameRes + r"\\CASO Nº\caso\, - REP Nº\rep}}"
 
+# REMOVER ESTE TRECHO DE INFORMAÇÕES QUANDO HOUVER UMA GUI, E NÃO FOR MAIS NECESSÁRIO.
+info = "\\begin{comment}\n"
+for local in locais:
+    info += f"Local {local.locId}:\n{local.info()}"
+info += "\\end{comment}"
 
 hist = f"""
 \\section{{HISTÓRICO DO CASO}}
@@ -619,9 +628,10 @@ Foram utilizados os seguintes materiais no presente exame pericial:
     
 \end{itemize}"""
 
-descLocal = r"""
+descLocalGeral = r"""
 \section{DO LOCAL}
 
+\subsection{CARACTERÍSTICAS GERAIS}
 
 Quando da chegada da Equipe Técnica ao local, foi observado que o tempo se encontrava
 	%desnublado
@@ -633,9 +643,9 @@ Quando da chegada da Equipe Técnica ao local, foi observado que o tempo se enco
 %
 %No que tange à iluminação, a Equipe Técnica realizou a perícia no período noturno, e o local não era provido de iluminação artificial adequada, tornando a visibilidade limitada durante os Exames Periciais.
 
-Foi constatado também que a ocorrência se deu
+%Foi constatado também que a ocorrência se deu
 	%em via de nome inexistente, mais especificamente nas coordenadas geográficas \coord.
-	no endereço \textbf{\rua, \bairro, \municipio - PE}. Mais especificamente, esta localidade pode ser representada pelas coordenadas geográficas cartesianas \textbf{\coord}.
+%	no endereço \textbf{\rua, \bairro, \municipio - PE}. Mais especificamente, esta localidade pode ser representada pelas coordenadas geográficas cartesianas \textbf{\coord}.
 %Esta localização se também se encontra representada através das figuras \ref{mapa} e \ref{mapazoom}, que mostram fotografias do local da ocorrência obtidas por meios aeroespaciais (fonte: {\sl Google Earth}).
 
 %\f{mapa}{Mapa em escala reduzida no qual o marcador vermelho indica o local da ocorrência.}
@@ -643,57 +653,93 @@ Foi constatado também que a ocorrência se deu
 
 Tratava-se de uma área ocupada por casas de padrão aquisitivo baixo, povoada, plana, com as vias cobertas por paralelepípedos, e destinadas ao tráfego local.
 
-Especificamente, no que concerne ao local mediato, a via pela qual se deu acesso à ocorrência permitia tráfego nos dois sentidos, possuía calçadas transitáveis por pedestres, com iluminação pública adequada e, em suas margens, havia casas de padrões similares às descritas acima, com acabamento, muitas com dois pavimentos. 
 
-O ambiente imediato se deu na via cujo endereço fora declinado.\par{}As figuras \ref{cheg1} a \ref{chegfim} mostram as condições do ambiente mediato e imediato no momento dos exames periciais.
-%O ambiente imediato se deu no interior de uma residência, cujo trajeto desde o exterior até o acesso a esta é exibido nas figuras \ref{cheg1} a \ref{chegfim}:
+"""
 
 
-\f{cheg1}{Fotografia mostrando o local da ocorrência.}
-%\f{cheg2}{Fotografia mostrando o local da ocorrência.}
-%\f{cheg3}{Fotografia mostrando o local da ocorrência.}
-%\f{cheg4}{Fotografia mostrando o local da ocorrência.}
-%\f{cheg5}{Fotografia mostrando o local da ocorrência.}
-%\f{cheg6}{Fotografia mostrando o local da ocorrência.}
-%\f{cheg7}{Fotografia mostrando o local da ocorrência.}
-%\f{cheg8}{Fotografia mostrando o local da ocorrência.}
-%\f{cheg9}{Fotografia mostrando o local da ocorrência.}
-%\f{cheg10}{Fotografia mostrando o local da ocorrência.}
-%\f{cheg11}{Fotografia mostrando o local da ocorrência.}
-\f{chegfim}{Fotografia mostrando o local da ocorrência.}
+descLocalDetalhe = ''
+for local in locais:
+    mapName = f'mapa{str(local.locId)}'
+    mapZoomName = f'mapazoom{str(local.locId)}'
+    lat = local.coord[0]
+    lon = local.coord[1]
+    
+    with open(os.path.join(images_path, mapName + '.jpg'), 'wb') as mapa, open(os.path.join(images_path, mapZoomName + '.jpg'), 'wb') as mapaZoom:
+        mapa.write(local.getMaps(zoom=configs.zoom['lowzoom']))
+        mapa.close()
+        
+        mapaZoom.write(local.getMaps(zoom = configs.zoom['highzoom']))
+        mapaZoom.close()
 
-Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela flexível e translúcida. A área compreendia as porções anterior e laterais da residência, conforme figuras \ref{ter1} a \ref{terfim}:
+        
+    descLocalDetalhe += \
+        r"""\subsection{""" + (f'Local {local.locId}: ' if len(locais) > 1 else '') + """AMBIENTES MEDIATO E IMEDIATO}\n\n"""\
+        \
+        \
+        f"""
+        Especificamente, no que concerne ao local mediato, a via pela qual se deu acesso à ocorrência permitia tráfego nos dois sentidos, possuía calçadas transitáveis por pedestres, com iluminação pública adequada e, em suas margens, havia casas de padrões similares às descritas acima.
+        
+        O ambiente imediato se deu no endereço {textbf(f"{local.rua}, {local.bairro}, {local.municipio} - PE")}. Mais especificamente, esta localidade pode ser representada pelas coordenadas geográficas cartesianas {textbf(f'{lat},{lon}')}. Esta localização também se encontra representada através das figuras {ref(mapName)} e {ref(mapZoomName)}, que mostram fotografias do local da ocorrência obtidas por meios aeroespaciais (fonte: {{\sl Google Earth}}).
 
-\f{ter1}{Fotografia de terreno pertencente ao lote em tela.}
-\f{ter2}{Fotografia de terreno pertencente ao lote em tela.}
-\f{ter3}{Fotografia de terreno pertencente ao lote em tela.}
-\f{ter5}{Fotografia de terreno pertencente ao lote em tela.}
-\f{ter4}{Fotografia de terreno pertencente ao lote em tela.}
-\f{ter6}{Fotografia de terreno pertencente ao lote em tela.}
-\f{terfim}{Fotografia de terreno pertencente ao lote em tela.}
+        {fig(f'{mapName}', 'Mapa em escala reduzida no qual o marcador vermelho indica o local da ocorrência.')}
+        {fig(f'{mapZoomName}', 'Mapa em escala ampliada no qual o marcador vermelho indica o local da ocorrência.')}
+        
+        
+        As figuras {ref('cheg1')} a {ref('chegfim')} mostram as condições do ambiente mediato no momento dos exames periciais.
+        
 
-A residência, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme figuras \ref{int1} a \ref{intfim}.
-%O local imediato (onde se encontrava o cadáver) era o XXXXX.
+        {fig('cheg1','Fotografia mostrando o local da ocorrência')}
+        {fig('cheg2','Fotografia mostrando o local da ocorrência')}
+        {fig('cheg3','Fotografia mostrando o local da ocorrência')}
+        {fig('cheg4','Fotografia mostrando o local da ocorrência')}
+        {fig('cheg5','Fotografia mostrando o local da ocorrência')}
+        {fig('cheg6','Fotografia mostrando o local da ocorrência')}
+        {fig('cheg7','Fotografia mostrando o local da ocorrência')}
+        {fig('cheg8','Fotografia mostrando o local da ocorrência')}
+        {fig('cheg9','Fotografia mostrando o local da ocorrência')}
+        {fig('cheg10','Fotografia mostrando o local da ocorrência')}
+        {fig('cheg11','Fotografia mostrando o local da ocorrência')}
+        {fig('chegfim','Fotografia mostrando o local da ocorrência')}"""
+        
+    if local.tipo.lower() in ['interno', 'misto']:
+        
+        descLocalDetalhe += \
+            f"""O ambiente imediato se deu no interior de um imóvel, já exibido externamente nas figuras {ref('cheg1')} a {ref('chegfim')}.
+            
+            Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela flexível e translúcida. A área compreendia as porções anterior e laterais da residência, conforme figuras {ref('ter1')} a {ref('terfim')}:
 
-\f{int1}{Fotografia do interior da residência.}
-\f{int2}{Fotografia do interior da residência.}
-\f{int3}{Fotografia do interior da residência.}
-\f{int4}{Fotografia do interior da residência.}
-\f{int5}{Fotografia do interior da residência.}
-\f{int6}{Fotografia do interior da residência.}
-\f{int7}{Fotografia do interior da residência.}
-\f{int8}{Fotografia do interior da residência.}
-\f{int9}{Fotografia do interior da residência.}
-\f{int10}{Fotografia do interior da residência.}
-\f{int11}{Fotografia do interior da residência.}
-\f{int12}{Fotografia do interior da residência.}
-\f{int13}{Fotografia do interior da residência.}
-\f{int14}{Fotografia do interior da residência.}
-\f{int15}{Fotografia do interior da residência.}
-\f{intfim}{Fotografia do interior da residência.}
+            {fig('ter1', 'Fotografia de terreno pertencente ao lote em tela.')}
+            {fig('ter2', 'Fotografia de terreno pertencente ao lote em tela.')}
+            {fig('ter3', 'Fotografia de terreno pertencente ao lote em tela.')}
+            {fig('ter4', 'Fotografia de terreno pertencente ao lote em tela.')}
+            {fig('ter5', 'Fotografia de terreno pertencente ao lote em tela.')}
+            {fig('ter6', 'Fotografia de terreno pertencente ao lote em tela.')}
+            {fig('terfim', 'Fotografia de terreno pertencente ao lote em tela.')}
 
-%O local imediato (onde se encontrava o cadáver) era o XXXXX."""
+            A residência, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme figuras {ref('int1')} a {ref('intfim')}.
 
+            {fig('int1', 'Fotografia do interior da residência.')}
+            {fig('int2', 'Fotografia do interior da residência.')}
+            {fig('int3', 'Fotografia do interior da residência.')}
+            {fig('int4', 'Fotografia do interior da residência.')}
+            {fig('int5', 'Fotografia do interior da residência.')}
+            {fig('int6', 'Fotografia do interior da residência.')}
+            {fig('int7', 'Fotografia do interior da residência.')}
+            {fig('int8', 'Fotografia do interior da residência.')}
+            {fig('int9', 'Fotografia do interior da residência.')}
+            {fig('int10', 'Fotografia do interior da residência.')}
+            {fig('int11', 'Fotografia do interior da residência.')}
+            {fig('int12', 'Fotografia do interior da residência.')}
+            {fig('int13', 'Fotografia do interior da residência.')}
+            {fig('int14', 'Fotografia do interior da residência.')}
+            {fig('int15', 'Fotografia do interior da residência.')}
+            {fig('intfim', 'Fotografia do interior da residência.')}
+
+            %O local imediato (onde se encontrava o cadáver) era o XXXXX, confore pode ser observado nas figuras {ref('int1')} a {ref('intfim')}.
+        
+        
+    """
+    
 isol = r"""
 
 \section{ISOLAMENTO E PRESERVAÇÃO DO LOCAL \label{isolamento}}
@@ -786,13 +832,21 @@ Por fim, foram encontrados dois aparelhos de telefonia celular próximos à entr
 \subsection{DO CADÁVER}
 
 Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um cadáver, que
-    se encontrava coberto por um lençol (figura \ref{lencol}). Após sua remoção, ele 
+    se encontrava coberto por um lençol (figura \ref{lencol}). Após a remoção deste cobertor, tal cadáver 
 foi registrado em ângulos diferentes para permitir uma completa visualização da posição e condições iniciais em que foi encontrado. Estas fotografias estão exibidas nas figuras \ref{vit1} a \ref{vit4}:
 
 \f{vit1}{Fotografia do cadáver na posição original, quando da chegada da Equipe Técnica.}
 \f{vit2}{Fotografia do cadáver na posição original, quando da chegada da Equipe Técnica.}
 \f{vit3}{Fotografia do cadáver na posição original, quando da chegada da Equipe Técnica.}
 \f{vit4}{Fotografia do cadáver na posição original, quando da chegada da Equipe Técnica.}
+
+%Também foram realizadas fotografias após a remoção da vítima até local adequado à Análise Perinecroscópica, conforme figuras \ref{vit5} a \ref{vit8}:
+
+%\f{vit5}{Fotografia do cadáver após sua remoção a local adequado.}
+%\f{vit6}{Fotografia do cadáver após sua remoção a local adequado.}
+%\f{vit7}{Fotografia do cadáver após sua remoção a local adequado.}
+%\f{vit8}{Fotografia do cadáver após sua remoção a local adequado.}
+
 
 \subsubsection{IDENTIFICAÇÃO}
 
@@ -951,11 +1005,12 @@ SECRETARIA DE DEFESA SOCIAL – GERÊNCIA GERAL DE POLÍCIA CIENTÍFICA – INST
 
 string_dict = {
 '<MACROS>': result_macros, 
+'<INFO>': info,
 '<TÍTULO>': titulo,
 '<HISTORICO>': hist, 
 '<OBJETIVO>': objetivo, 
 '<MATERIAIS>': materiais, 
-'<DESC_LOCAL>': descLocal,
+'<DESC_LOCAL>': descLocalGeral + descLocalDetalhe,
 '<ISOLAMENTO>': isol, 
 '<EXAMES>': exames, 
 '<CONCLUSÕES>': conc, 
