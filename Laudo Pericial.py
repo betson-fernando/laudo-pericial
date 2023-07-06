@@ -688,18 +688,18 @@ for local in locais:
         As figuras {ref('cheg1')} a {ref('chegfim')} mostram as condições do ambiente mediato no momento dos exames periciais.
         
 
-        {fig('cheg1','Fotografia mostrando o local da ocorrência')}
-        {fig('cheg2','Fotografia mostrando o local da ocorrência')}
-        {fig('cheg3','Fotografia mostrando o local da ocorrência')}
-        {fig('cheg4','Fotografia mostrando o local da ocorrência')}
-        {fig('cheg5','Fotografia mostrando o local da ocorrência')}
-        {fig('cheg6','Fotografia mostrando o local da ocorrência')}
-        {fig('cheg7','Fotografia mostrando o local da ocorrência')}
-        {fig('cheg8','Fotografia mostrando o local da ocorrência')}
-        {fig('cheg9','Fotografia mostrando o local da ocorrência')}
-        {fig('cheg10','Fotografia mostrando o local da ocorrência')}
-        {fig('cheg11','Fotografia mostrando o local da ocorrência')}
-        {fig('chegfim','Fotografia mostrando o local da ocorrência')}"""
+        {fig('cheg1','Fotografia mostrando o local da ocorrência.')}
+        {fig('cheg2','Fotografia mostrando o local da ocorrência.')}
+        {fig('cheg3','Fotografia mostrando o local da ocorrência.')}
+        {fig('cheg4','Fotografia mostrando o local da ocorrência.')}
+        {fig('cheg5','Fotografia mostrando o local da ocorrência.')}
+        {fig('cheg6','Fotografia mostrando o local da ocorrência.')}
+        {fig('cheg7','Fotografia mostrando o local da ocorrência.')}
+        {fig('cheg8','Fotografia mostrando o local da ocorrência.')}
+        {fig('cheg9','Fotografia mostrando o local da ocorrência.')}
+        {fig('cheg10','Fotografia mostrando o local da ocorrência.')}
+        {fig('cheg11','Fotografia mostrando o local da ocorrência.')}
+        {fig('chegfim','Fotografia mostrando o local da ocorrência.')}"""
         
     if local.tipo.lower() in ['interno', 'misto']:
         
