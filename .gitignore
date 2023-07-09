@@ -3,4 +3,4 @@
 /workspace.xml
 
 # Environment keys
-.env
+*.env
