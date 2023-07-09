@@ -17,7 +17,7 @@ from zipfile import BadZipFile
 sys.path.insert(0, r'C:\Users\GEPH-IC\Documents\Betson\Laudo Pericial')
 from Classes.Local import Local
 from globalfuncs.funcs import textbf, ref, fig
-import configs
+import settings
 
 SCRIPT_PATH = os.path.realpath(os.path.dirname(__file__))
 
@@ -665,10 +665,10 @@ for local in locais:
     lon = local.coord[1]
     
     with open(os.path.join(images_path, mapName + '.jpg'), 'wb') as mapa, open(os.path.join(images_path, mapZoomName + '.jpg'), 'wb') as mapaZoom:
-        mapa.write(local.getMaps(zoom=configs.zoom['lowzoom']))
+        mapa.write(local.getMaps(zoom=settings.LOW_ZOOM))
         mapa.close()
         
-        mapaZoom.write(local.getMaps(zoom = configs.zoom['highzoom']))
+        mapaZoom.write(local.getMaps(zoom=settings.LOW_ZOOM))
         mapaZoom.close()
 
         
