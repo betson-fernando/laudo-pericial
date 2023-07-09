@@ -668,7 +668,7 @@ for local in locais:
         mapa.write(local.getMaps(zoom=settings.LOW_ZOOM))
         mapa.close()
         
-        mapaZoom.write(local.getMaps(zoom=settings.LOW_ZOOM))
+        mapaZoom.write(local.getMaps(zoom=settings.HIGH_ZOOM))
         mapaZoom.close()
 
         
