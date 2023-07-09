@@ -803,7 +803,9 @@ A equipe técnica analisou meticulosamente o local em busca de evidências relac
 
 \end{enumerate}
 
-As figuras \ref{bal1} a \ref{bal6} exibem, no local da ocorrência, os elementos balísticos acima relatados, e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima.
+As figuras \ref{bal1} a \ref{bal6} exibem, no local da ocorrência, os elementos balísticos acima relatados
+:
+, %e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima.
 
 \f{bal1}{Fotografia indicando a localização de elemento(s) balístico(s).}
 \f{bal2}{Fotografia indicando a localização de elemento(s) balístico(s).}
@@ -871,9 +873,9 @@ Na sua epiderme foram constatadas tatuagens, fotografadas e exibidas nas figuras
 \f{tatfim}{Fotografia de tatuagem no cadáver.}
 
 %No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise, motivo pelo qual sua identidade foi declarada como sendo desconhecida. 
-%No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise. Contudo, a informação de familiares, aliada a pesquisa no sistema "Polícia Ágil", da Secretaria de Defesa Social de Pernambuco, revelou se tratar de \textbf{\nome}, filho de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
+%No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise. Contudo, a informação de familiares, aliada a pesquisa no sistema "Polícia Ágil", da Secretaria de Defesa Social de Pernambuco, revelou se tratar de \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
 No momento dos exames periciais, foi encontrada uma Carteira de Identidade pertencente ao indivíduo cujo cadáver estava sob análise, constatando que seu nome era \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figuras \ref{ida} e \ref{idv}).
-%No momento dos exames periciais, foi apresentada a Carteira Nacional de Habilitação (CNH) do indivíduo cujo cadáver estava sob análise, constatando que seu nome era \textbf{\nome}, filha de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
+%No momento dos exames periciais, foi apresentada a Carteira Nacional de Habilitação (CNH) do indivíduo cujo cadáver estava sob análise, constatando que seu nome era \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
 %No momento dos exames periciais, foi apresentada a Carteira de Trabalho e Previdência Social do indivíduo cujo cadáver estava sob análise, de número \CTPSnum{ }e série \CTPSser, a partir da qual foi constatado que seu nome era \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figuras \ref{ida} e \ref{idv}).
 
 Foi atribuído ao cadáver o Número de Identificação Cadavérica (NIC) \nic, colocada a Pulseira de Identificação Cadavérica (PIC) (figura \ref{pic}), e preenchido o Boletim de Identificação Cadavérica (BIC) (figura \ref{bic}).
