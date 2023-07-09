@@ -357,10 +357,10 @@ tab_base_path = ender.iloc[5, 1]  # Caminho físico para a tabela preenchida na 
 aba_base = ender.iloc[6, 1]  # Nome da aba para a tabela preenchida na base
 aba_vit_base = ender.iloc[7, 1]  # Nome da aba da tabela de vítimas preenchida na base
 
-tab_base_url = ender.iloc[8, 1]  # URL para tabela preenchida na base
+tab_base_url = settings.MAIN_SHEET_URL  # URL para tabela preenchida na base
 
 tab_form_path = ender.iloc[9, 1]  # Caminho físico para a tabela dos formulários
-tab_form_url = ender.iloc[10, 1]  # URL para tabela dos formulários
+tab_form_url = settings.FORMS_URL  # URL para tabela dos formulários
 
 aba_info = ender.iloc[11, 1]  # Nome da aba das informações gerais na tabela dos formulários
 aba_vit_loc = ender.iloc[12, 1]  # Nome da aba das informações da vítima na tabela dos formulários
