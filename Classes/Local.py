@@ -7,7 +7,7 @@ from textwrap import dedent
 from globalfuncs.funcs import testNumber, testEmpty
 
 sys.path.insert(0, r'C:\Users\GEPH-IC\Documents\Betson\Laudo Pericial')
-import configs
+import settings
 
 
 class Local():
@@ -43,15 +43,15 @@ class Local():
                 assert isinstance(item, str)
         except (ValueError, AssertionError):
             sys.exit("As coordenadas não foram digitadas da forma correta.\nO argumento deve ser uma tupla de duas strings de números float, com separador decimal de ponto (\".\").\nO programa será encerrado.")
-            else:
-                lat = testNumber("latitude", coord[0])
-                lon = testNumber("longitude", coord[1])
-                self.coord = (lat, lon)
-                    
-            self.municipio = testEmpty("municipio", municipio)
-            self.bairro = testEmpty("bairro", bairro)
-            self.rua = testEmpty("rua", rua)  
-            self.tipo = testEmpty("tipo de local (interno, externo, ou misto)", tipo)
+        else:
+            lat = testNumber("latitude", coord[0])
+            lon = testNumber("longitude", coord[1])
+            self.coord = (lat, lon)
+                
+        self.municipio = testEmpty("municipio", municipio)
+        self.bairro = testEmpty("bairro", bairro)
+        self.rua = testEmpty("rua", rua)  
+        self.tipo = testEmpty("tipo de local (interno, externo, ou misto)", tipo)
         
         
     def getMaps(self, addPlaces=[], zoom:int=np.NaN):
@@ -71,15 +71,15 @@ class Local():
            "maptype": "hybrid",
            "style": "feature:poi|visibility:off",
            "markers": [f"color:red|label:{place.locId}|size:mid|{place.coord[0]},{place.coord[1]}" for place in places],
-           "key": configs.mapimport['APIKEY']
+           "key": settings.MAPS_API_KEY
        }
         
         if zoom is not np.NaN:
             payload["zoom"] = zoom
-            return requests.get(configs.mapimport['URL'], params=payload).content
+            return requests.get(settings.MAPS_URL, params=payload).content
                 
         elif zoom is np.NaN and addPlaces != []:
-            return requests.get(configs.mapimport['URL'], params=payload).content
+            return requests.get(settings.MAPS_URL, params=payload).content
             
         else:
             sys.exit("Para obter mapa com apenas um marcador, o zoom deve ser informado.\nO programa será fechado.")
