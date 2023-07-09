@@ -2,8 +2,9 @@ import sys
 from os import path
 import requests
 import numpy as np
+
 sys.path.insert(0, r'C:\Users\GEPH-IC\Documents\Betson\Laudo Pericial')
-import configs
+import settings
 
 LOWZOOM = 17
 HIGHZOOM = 20
@@ -78,14 +79,14 @@ class Local():
                    "maptype": "hybrid",
                    "style": "feature:poi|visibility:off",
                    "markers": [f"color:red|label:{self.locId}|size:mid|{self.coord[0]},{self.coord[1]}"],
-                   "key": configs.mapimport['APIKEY']   
+                   "key": settings.MAPS_API_KEY
                    }
         if addPlaces:
             payload["markers"].append([f"color:yellow|label:{place.locId}|size:mid|{place.coord[0]},{place.coord[1]}" for place in addPlaces])
             
         for cont in range(0, len(zoomList)):
             payload["zoom"] = int(zoomList[cont])
-            r = requests.get(configs.mapimport['URL'], params=payload)
+            r = requests.get(settins.MAPS_URL, params=payload)
 
             with open(path.join(basePath, f"mapa{cont+1}.jpg"), 'wb') as f:
                 f.write(r.content)
