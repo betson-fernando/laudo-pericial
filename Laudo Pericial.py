@@ -910,7 +910,7 @@ Foram feitos registros fotográficos destes itens, que estão exibidos nas figur
  
 Quando da chegada da Equipe Técnica, o cadáver estava em decúbito ventral, com os membros flexionados, à exceção do inferior esquerdo, que se encontrava estendido (figuras \ref{vit1} a \ref{vit4}).
 
-\subsubsection{PERINECROSPOCIA}
+\subsubsection{PERINECROSCOPIA}
 
 %TODO : Descrever rigidez, manchas hipostáticas, etc
 
