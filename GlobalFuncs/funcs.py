@@ -10,7 +10,7 @@ def testNumber(name, value):
     
     while True:
         try:
-            temp = float(value)
+            float(value)
         except ValueError:
             value = input(f"O valor {name} deveria ser uma string numérica, com separador decimal de ponto ('.').\nDigite corretamente: ")
         else:

@@ -37,21 +37,24 @@ class Local():
             self.locId = locId
             self.idList.append(locId)
         
+        
         try:
+            # Esse try é apenas para garantir que os parâmetros da classe instaciada estão no formato correto. Não previne erros de usuários.
             assert isinstance(coord, tuple) and len(coord) == 2
             for item in coord:
                 assert isinstance(item, str)
         except (ValueError, AssertionError):
             sys.exit("As coordenadas não foram digitadas da forma correta.\nO argumento deve ser uma tupla de duas strings de números float, com separador decimal de ponto (\".\").\nO programa será encerrado.")
         else:
+            # Testes de erro de entrada do usuário.
             lat = testNumber("latitude", coord[0])
             lon = testNumber("longitude", coord[1])
             self.coord = (lat, lon)
                 
         self.municipio = testEmpty("municipio", municipio)
         self.bairro = testEmpty("bairro", bairro)
-        self.rua = testEmpty("rua", rua)  
-        self.tipo = testEmpty("tipo de local (interno, externo, ou misto)", tipo)
+        self.rua = rua  
+        self.tipo = tipo
         
         
     def getMaps(self, addPlaces=[], zoom:int=np.NaN):
@@ -74,6 +77,7 @@ class Local():
            "key": configs.mapimport['APIKEY']
        }
         
+
         if zoom is not np.NaN:
             payload["zoom"] = zoom
             return requests.get(configs.mapimport['URL'], params=payload).content
