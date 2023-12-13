@@ -7,7 +7,7 @@ from textwrap import dedent
 from globalfuncs.funcs import testNumber, testEmpty
 
 sys.path.insert(0, r'C:\Users\GEPH-IC\Documents\Betson\Laudo Pericial')
-import configs
+import settings
 
 
 class Local():
@@ -74,20 +74,20 @@ class Local():
            "maptype": "hybrid",
            "style": "feature:poi|visibility:off",
            "markers": [f"color:red|label:{place.locId}|size:mid|{place.coord[0]},{place.coord[1]}" for place in places],
-           "key": configs.mapimport['APIKEY']
+           "key": settings.MAPS_API_KEY
        }
         
 
         if zoom is not np.NaN:
             payload["zoom"] = zoom
-            return requests.get(configs.mapimport['URL'], params=payload).content
+            return requests.get(settings.MAPS_URL, params=payload).content
                 
         elif zoom is np.NaN and addPlaces != []:
-            return requests.get(configs.mapimport['URL'], params=payload).content
+            return requests.get(settings.MAPS_URL, params=payload).content
             
         else:
             sys.exit("Para obter mapa com apenas um marcador, o zoom deve ser informado.\nO programa será fechado.")
-
+            
     def info(self):
         """Retorna informações do local.
         Este método não tem entradas, e o retorno é uma string.."""
@@ -98,15 +98,4 @@ class Local():
                 Coordenadas: lat={lat}, long={long}
                 Tipo de local: {self.tipo}.
                 """)
-    
-    
-    #def toTex(self):
-    #    """Retorna uma string pronta para aplicação no arquivo tex"""
-        
-        #t = Template(r"\newcommand{$key}{$value}" +"\n")
-        #return t.substitute(key=r"\rua", value=self.rua) + \
-        #       t.substitute(key=r"\bairro", value=self.bairro) + \
-        #       t.substitute(key=r"\municipio", value=self.municipio) + \
-        #       t.substitute(key=r"\coord", value=f"{self.coord[0]}, {self.coord[1]}")
-               
-
+                

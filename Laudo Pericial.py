@@ -17,7 +17,7 @@ from zipfile import BadZipFile
 sys.path.insert(0, r'C:\Users\GEPH-IC\Documents\Betson\Laudo Pericial')
 from Classes.Local import Local
 from globalfuncs.funcs import textbf, ref, fig
-import configs
+import settings
 
 SCRIPT_PATH = os.path.realpath(os.path.dirname(__file__))
 
@@ -364,10 +364,10 @@ tab_base_path = ender.iloc[5, 1]  # Caminho físico para a tabela preenchida na 
 aba_base = ender.iloc[6, 1]  # Nome da aba para a tabela preenchida na base
 aba_vit_base = ender.iloc[7, 1]  # Nome da aba da tabela de vítimas preenchida na base
 
-tab_base_url = ender.iloc[8, 1]  # URL para tabela preenchida na base
+tab_base_url = settings.MAIN_SHEET_URL  # URL para tabela preenchida na base
 
 tab_form_path = ender.iloc[9, 1]  # Caminho físico para a tabela dos formulários
-tab_form_url = ender.iloc[10, 1]  # URL para tabela dos formulários
+tab_form_url = settings.FORMS_URL  # URL para tabela dos formulários
 
 aba_info = ender.iloc[11, 1]  # Nome da aba das informações gerais na tabela dos formulários
 aba_vit_loc = ender.iloc[12, 1]  # Nome da aba das informações da vítima na tabela dos formulários
@@ -673,10 +673,10 @@ for local in locais:
     lon = local.coord[1]
     
     with open(os.path.join(images_path, mapName + '.jpg'), 'wb') as mapa, open(os.path.join(images_path, mapZoomName + '.jpg'), 'wb') as mapaZoom:
-        mapa.write(local.getMaps(zoom=configs.zoom['lowzoom']))
+        mapa.write(local.getMaps(zoom=settings.LOW_ZOOM))
         mapa.close()
         
-        mapaZoom.write(local.getMaps(zoom = configs.zoom['highzoom']))
+        mapaZoom.write(local.getMaps(zoom=settings.HIGH_ZOOM))
         mapaZoom.close()
 
         
@@ -707,7 +707,11 @@ for local in locais:
         {fig('cheg9','Fotografia mostrando o local da ocorrência.')}
         {fig('cheg10','Fotografia mostrando o local da ocorrência.')}
         {fig('cheg11','Fotografia mostrando o local da ocorrência.')}
+<<<<<<< HEAD
         {fig('chegfim','Fotografia mostrando o local da ocorrência.')}\n\n"""
+=======
+        {fig('chegfim','Fotografia mostrando o local da ocorrência.')}"""
+>>>>>>> main
         
     print(local.tipo.lower()) 
     if local.tipo.lower() in ['interno', 'misto']:
@@ -814,7 +818,11 @@ A equipe técnica analisou meticulosamente o local em busca de evidências relac
 
 As figuras \ref{bal1} a \ref{bal6} exibem, no local da ocorrência, os elementos balísticos acima relatados
 :
+<<<<<<< HEAD
 %, e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima.
+=======
+, %e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima.
+>>>>>>> main
 
 \f{bal1}{Fotografia indicando a localização de elemento(s) balístico(s).}
 \f{bal2}{Fotografia indicando a localização de elemento(s) balístico(s).}
@@ -882,9 +890,9 @@ Na sua epiderme foram constatadas tatuagens, fotografadas e exibidas nas figuras
 \f{tatfim}{Fotografia de tatuagem no cadáver.}
 
 %No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise, motivo pelo qual sua identidade foi declarada como sendo desconhecida. 
-%No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise. Contudo, a informação de familiares, aliada a pesquisa no sistema "Polícia Ágil", da Secretaria de Defesa Social de Pernambuco, revelou se tratar de \textbf{\nome}, filho de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
+%No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise. Contudo, a informação de familiares, aliada a pesquisa no sistema "Polícia Ágil", da Secretaria de Defesa Social de Pernambuco, revelou se tratar de \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
 No momento dos exames periciais, foi encontrada uma Carteira de Identidade pertencente ao indivíduo cujo cadáver estava sob análise, constatando que seu nome era \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figuras \ref{ida} e \ref{idv}).
-%No momento dos exames periciais, foi apresentada a Carteira Nacional de Habilitação (CNH) do indivíduo cujo cadáver estava sob análise, constatando que seu nome era \textbf{\nome}, filha de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
+%No momento dos exames periciais, foi apresentada a Carteira Nacional de Habilitação (CNH) do indivíduo cujo cadáver estava sob análise, constatando que seu nome era \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
 %No momento dos exames periciais, foi apresentada a Carteira de Trabalho e Previdência Social do indivíduo cujo cadáver estava sob análise, de número \CTPSnum{ }e série \CTPSser, a partir da qual foi constatado que seu nome era \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figuras \ref{ida} e \ref{idv}).
 
 Foi atribuído ao cadáver o Número de Identificação Cadavérica (NIC) \nic, colocada a Pulseira de Identificação Cadavérica (PIC) (figura \ref{pic}), e preenchido o Boletim de Identificação Cadavérica (BIC) (figura \ref{bic}).
@@ -919,7 +927,7 @@ Foram feitos registros fotográficos destes itens, que estão exibidos nas figur
  
 Quando da chegada da Equipe Técnica, o cadáver estava em decúbito ventral, com os membros flexionados, à exceção do inferior esquerdo, que se encontrava estendido (figuras \ref{vit1} a \ref{vit4}).
 
-\subsubsection{PERINECROSPOCIA}
+\subsubsection{PERINECROSCOPIA}
 
 %TODO : Descrever rigidez, manchas hipostáticas, etc
 

@@ -3,4 +3,9 @@
 /workspace.xml
 
 # Environment keys
-.env
+*.env
+
+# SHEETS URLS
+Forms.xlsx
+REGISTRO GEPH-DHPP_2023.xlsx
+
