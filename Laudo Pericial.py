@@ -251,16 +251,23 @@ def return_tgt_row(sheet: pd.DataFrame, index_str: str, message: str, exit_if_no
             return line.fillna("")
 
 
-def fmt_values(value: datetime.date or datetime.time) -> str:
+def fmt_values(value, name="", forceInput=False) -> str:
     """Esta função recebe um valor, e decide se é do tipo 'datetime.datetime', 'datetime.time', ou outro qualquer.
      Então, no caso de ser o primeiro tipo, converte em uma string do tipo 'dd/mm/aaaa'; no caso de ser o segundo, em
-     'HH:mm' (adicionando um '0' se necessário); no caso de ser o terceiro, simplesmente retorna o valor de entrada"""
+     'HH:mm' (adicionando um '0' se necessário); no caso de ser o terceiro, simplesmente retorna o valor de entrada.
+     Caso for string vazia, e forceInput for True, será solicitado ao usuário um valor para o parâmetro value;
+     Caso for string vazia, e forceInput for False, o programa continuará a executar silenciosamente.
+
+     Entradas:
+        --> value: valor a ser tratado;
+        --> name: nome que identifica o valor para exibir mensagem, caso forceInput for True e o valor for vazio;
+        --> forceInput (False): decide se solicita entrada por parte do usuário caso 'valor' for vazio."""
 
     if isinstance(value, (str, int, np.int64)):
         if value != "":
             data_str = value
         else:
-            data_str = r"\textbf{PREENCHER PREENCHER PREENCHER}"
+            data_str = input(f"O campo \"{name}\" não foi preenchido. Digite o valor: ") if forceInput else r"\textbf{PREENCHER PREENCHER PREENCHER}"
     elif isinstance(value, float):
         data_str = int(value)
     elif isinstance(value, (datetime, np.datetime64)):
@@ -410,7 +417,8 @@ if row_base.empty:
 
 # OBS.: NO FUTURO, SE FICAR PROIBIDO FAZER "row_base[<str>].iloc[<int>]", posso usar "row_base.loc[<int>, <str>]".
 
-locais = [Local(1, (row_base['lat'].iloc[0], row_base['lon'].iloc[0]), row_base['municipio'].iloc[0], row_base['bairro'].iloc[0], row_base['rua'].iloc[0], row_base['tipoLocal'].iloc[0])]
+locais = [Local(1, (row_base['lat'].iloc[0], row_base['lon'].iloc[0]), row_base['municipio'].iloc[0], row_base['bairro'].iloc[0], row_base['rua'].iloc[0], row_base['tipoLoc'].iloc[0])]
+
 tipoExame = row_base['tipoexame']
 caso = row_base['index']
 rep = row_base['rep']
@@ -433,12 +441,12 @@ if dataCiente[0] != "" and 0 <= horaCiente[0].hour < 6:
     dataCiente.update(pd.Series(dataCiente + timedelta(days=1)))
 
 tipoExameRes = fmt_values(tipoExame.iloc[0])
-casoRes = macro("caso", caso)
-repRes = macro("rep", rep)
+casoRes = fmt_values(caso.iloc[0])
+repRes = fmt_values(rep.iloc[0], "rep", True)
 dataCienteRes = fmt_values(dataCiente.iloc[0])
 reqRes = fmt_values(req.iloc[0])
 auxRes = fmt_values(aux.iloc[0])
-delegadoRes = macro("delegado", delegado)
+delegadoRes = fmt_values(delegado.iloc[0], "delegado", True)
 #coordRes = macro("coord", coord)
 horaCienteRes = fmt_values(horaCiente.iloc[0])
 horaInicioRes = fmt_values(horaInicio.iloc[0])
@@ -447,7 +455,6 @@ horaFimRes = fmt_values(horaFim.iloc[0])
 #bairroRes = macro("bairro", bairro)
 #municipioRes = macro("municipio", municipio)
 
-string_base = casoRes + repRes + delegadoRes
 
 download_sheet(tab_form_url, tab_form_path, True)
 
@@ -457,7 +464,6 @@ sheet_info.set_index("caso", inplace=True)
 
 row_info = return_tgt_row(sheet_info, std_casoTgt, f"O caso {std_casoTgt} não foi inserido no FORMULÁRIO DE INFORMAÇÕES GERAIS.", True)
 
-tipoLoc = row_info['tipoLoc']
 nomePm = row_info['nomePM']
 matPm = row_info['matPM']
 batPM = row_info['batPM']
@@ -561,13 +567,13 @@ if open_bal:
     sheet_bal = open_sheet(tab_form_path, aba_bal, header_index_form, col_bal)
     row_bal = return_tgt_row(sheet_bal, casoTgt, "BALÍSTICA", False)
 
-result_macros = string_base + string_info + string_vit + string_veic + string_bal
+result_macros = string_info + string_vit + string_veic + string_bal
 
 
 # Renomear Pasta do caso para incluir número da rep:
-repStr = fmt_values(rep.iloc[0]) #REP no formato de string
-newName = f"{casoTgt.replace('/','.')} - {repStr.split('/')[0]}"  # Novo nome da pasta do caso ("caso - rep")
-os.rename(casodir_path, f"{casoDestPath}/{newName}") # Renomear
+#repStr = fmt_values(rep.iloc[0]) #REP no formato de string
+newName = f"{casoTgt.replace('/','.')} - {repRes.split('/')[0]}"  # Novo nome da pasta do caso ("caso - rep")
+os.rename(casodir_path, f"{casoDestPath}/{newName}") # Renomear para o novo nome acima
 casodir_path = f"{casoDestPath}/{newName}" # Atualização do caminho para a pasta do caso.
 
 file_path = f"{casodir_path}/Arquivos .TEX/{casoTgt.replace('/', '.')}.tex"
@@ -594,10 +600,13 @@ elif tipoExameRes == "suicídio":
 if tipoExameRes == "ossada":
     tipoExameRes = "EXAME EM LOCAL COM OSSADA"
 
-titulo = r"\centering \noindent \textbf{\emph{" + tipoExameRes + r"\\CASO Nº\caso\, - REP Nº\rep}}"
+rodape = "\\footskip=7.75mm\n\n\\cfoot{\\fontsize{10}{0} \\selectfont {\\sl{Laudo Pericial nº " + casoRes + " - REP nº " + repRes + r"} \hfill {Página \thepage}}\\\rule{16cm}{2pt}  \\\baselineskip=12pt\bf Rua Doutor João Lacerda, nº 395, bairro do Cordeiro, Recife/ PE – CEP: 50.711-280 \newline Administrativo/ Plantão: (81) 3184-3547 - E-mail: geph.dhpp@gmail.com}"
+
+titulo = r"\centering \noindent \textbf{\emph{" + tipoExameRes + r"\\CASO Nº " + casoRes + "\, - REP Nº " + repRes + "}}"
 
 # REMOVER ESTE TRECHO DE INFORMAÇÕES QUANDO HOUVER UMA GUI, E NÃO FOR MAIS NECESSÁRIO.
 info = "\\begin{comment}\n"
+info += f"Caso: {casoRes}\nREP: {repRes}\nDelegado: {delegadoRes}\n"
 for local in locais:
     info += f"Local {local.locId}:\n{local.info()}"
 info += "\\end{comment}"
@@ -656,7 +665,6 @@ Tratava-se de uma área ocupada por casas de padrão aquisitivo baixo, povoada, 
 
 """
 
-
 descLocalDetalhe = ''
 for local in locais:
     mapName = f'mapa{str(local.locId)}'
@@ -699,10 +707,15 @@ for local in locais:
         {fig('cheg9','Fotografia mostrando o local da ocorrência.')}
         {fig('cheg10','Fotografia mostrando o local da ocorrência.')}
         {fig('cheg11','Fotografia mostrando o local da ocorrência.')}
+<<<<<<< HEAD
+        {fig('chegfim','Fotografia mostrando o local da ocorrência.')}\n\n"""
+=======
         {fig('chegfim','Fotografia mostrando o local da ocorrência.')}"""
+>>>>>>> main
         
+    print(local.tipo.lower()) 
     if local.tipo.lower() in ['interno', 'misto']:
-        
+
         descLocalDetalhe += \
             f"""O ambiente imediato se deu no interior de um imóvel, já exibido externamente nas figuras {ref('cheg1')} a {ref('chegfim')}.
             
@@ -735,7 +748,7 @@ for local in locais:
             {fig('int15', 'Fotografia do interior da residência.')}
             {fig('intfim', 'Fotografia do interior da residência.')}
 
-            %O local imediato (onde se encontrava o cadáver) era o XXXXX, confore pode ser observado nas figuras {ref('int1')} a {ref('intfim')}.
+            %O local imediato (onde se encontrava o cadáver) era o XXXXX, conforme pode ser observado nas figuras {ref('int1')} a {ref('intfim')}.
         
         
     """
@@ -805,7 +818,11 @@ A equipe técnica analisou meticulosamente o local em busca de evidências relac
 
 As figuras \ref{bal1} a \ref{bal6} exibem, no local da ocorrência, os elementos balísticos acima relatados
 :
+<<<<<<< HEAD
+%, e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima.
+=======
 , %e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima.
+>>>>>>> main
 
 \f{bal1}{Fotografia indicando a localização de elemento(s) balístico(s).}
 \f{bal2}{Fotografia indicando a localização de elemento(s) balístico(s).}
@@ -1008,6 +1025,7 @@ SECRETARIA DE DEFESA SOCIAL – GERÊNCIA GERAL DE POLÍCIA CIENTÍFICA – INST
 string_dict = {
 '<MACROS>': result_macros, 
 '<INFO>': info,
+'<RODAPE>': rodape,
 '<TÍTULO>': titulo,
 '<HISTORICO>': hist, 
 '<OBJETIVO>': objetivo, 
