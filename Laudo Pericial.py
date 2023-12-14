@@ -320,12 +320,12 @@ def str_replace(dictio:{str:str}, orig_string: str) -> str:
 
     dictio: dicionário {str:str} cujas chaves são as tags, e valores são as strings que substituirão as tags;
     orig_string: string que contém as tags."""
-    
+
     for tag, rep_str in dictio.items():
         orig_string = orig_string.replace(tag, rep_str)
 
     return orig_string
-    
+
 
 ##############################################################
 
@@ -586,19 +586,19 @@ f_in = open(file_path, mode="r", encoding='utf-8')
 file_str = f_in.read()
 f_in.close()
 
-tipoExameRes = tipoExameRes.lower()
-if tipoExameRes == "homicídio":
-    tipoExameRes = "EXAME EM LOCAL COM HOMICÍDIO CONSUMADO"
-elif tipoExameRes == "duplo homicídio":
-    tipoExameRes = "EXAME EM LOCAL COM DUPLO HOMICÍDIO CONSUMADO"
-elif tipoExameRes == "triplo homicídio":
-    tipoExameRes = "EXAME EM LOCAL COM TRIPLO HOMICÍDIO CONSUMADO"
-elif tipoExameRes == "morte a esclarecer":
-    tipoExameRes = "EXAME EM LOCAL DE MORTE A ESCLARECER"
-elif tipoExameRes == "suicídio":
-    tipoExameRes == "EXAME EM LOCAL DE SUICÍDIO"
-if tipoExameRes == "ossada":
-    tipoExameRes = "EXAME EM LOCAL COM OSSADA"
+match tipoExameRes.lower():
+    case "homicídio":
+        tipoExameRes = "EXAME EM LOCAL COM HOMICÍDIO CONSUMADO"
+    case "duplo homicídio":
+        tipoExameRes = "EXAME EM LOCAL COM DUPLO HOMICÍDIO CONSUMADO"
+    case "triplo homicídio":
+        tipoExameRes = "EXAME EM LOCAL COM TRIPLO HOMICÍDIO CONSUMADO"
+    case "morte a esclarecer":
+        tipoExameRes = "EXAME EM LOCAL DE MORTE A ESCLARECER"
+    case "suicídio":
+        tipoExameRes = "EXAME EM LOCAL DE SUICÍDIO"
+    case "ossada":
+        tipoExameRes = "EXAME EM LOCAL COM OSSADA"
 
 rodape = "\\footskip=7.75mm\n\n\\cfoot{\\fontsize{10}{0} \\selectfont {\\sl{Laudo Pericial nº " + casoRes + " - REP nº " + repRes + r"} \hfill {Página \thepage}}\\\rule{16cm}{2pt}  \\\baselineskip=12pt\bf Rua Doutor João Lacerda, nº 395, bairro do Cordeiro, Recife/ PE – CEP: 50.711-280 \newline Administrativo/ Plantão: (81) 3184-3547 - E-mail: geph.dhpp@gmail.com}"
 
@@ -671,15 +671,14 @@ for local in locais:
     mapZoomName = f'mapazoom{str(local.locId)}'
     lat = local.coord[0]
     lon = local.coord[1]
-    
+
     with open(os.path.join(images_path, mapName + '.jpg'), 'wb') as mapa, open(os.path.join(images_path, mapZoomName + '.jpg'), 'wb') as mapaZoom:
         mapa.write(local.getMaps(zoom=settings.LOW_ZOOM))
         mapa.close()
-        
+
         mapaZoom.write(local.getMaps(zoom=settings.HIGH_ZOOM))
         mapaZoom.close()
 
-        
     descLocalDetalhe += \
         r"""\subsection{""" + (f'Local {local.locId}: ' if len(locais) > 1 else '') + """AMBIENTES MEDIATO E IMEDIATO}\n\n"""\
         \
@@ -693,7 +692,7 @@ for local in locais:
         {fig(f'{mapZoomName}', 'Mapa em escala ampliada no qual o marcador vermelho indica o local da ocorrência.')}
         
         
-        As figuras {ref('cheg1')} a {ref('chegfim')} mostram as condições do ambiente mediato no momento dos exames periciais.
+        As figuras {ref('cheg1')} a {ref('chegfim')} mostram as condições do ambiente mediato no momento dos exames periciais:
         
 
         {fig('cheg1','Fotografia mostrando o local da ocorrência.')}
@@ -707,19 +706,16 @@ for local in locais:
         {fig('cheg9','Fotografia mostrando o local da ocorrência.')}
         {fig('cheg10','Fotografia mostrando o local da ocorrência.')}
         {fig('cheg11','Fotografia mostrando o local da ocorrência.')}
-<<<<<<< HEAD
-        {fig('chegfim','Fotografia mostrando o local da ocorrência.')}\n\n"""
-=======
         {fig('chegfim','Fotografia mostrando o local da ocorrência.')}"""
->>>>>>> main
-        
-    print(local.tipo.lower()) 
+
     if local.tipo.lower() in ['interno', 'misto']:
 
         descLocalDetalhe += \
             f"""O ambiente imediato se deu no interior de um imóvel, já exibido externamente nas figuras {ref('cheg1')} a {ref('chegfim')}.
             
-            Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela flexível e translúcida. A área compreendia as porções anterior e laterais da residência, conforme figuras {ref('ter1')} a {ref('terfim')}:
+            Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela 
+            flexível e translúcida. A área compreendia as porções anterior e laterais da residência, conforme figuras
+            {ref('ter1')} a {ref('terfim')}:
 
             {fig('ter1', 'Fotografia de terreno pertencente ao lote em tela.')}
             {fig('ter2', 'Fotografia de terreno pertencente ao lote em tela.')}
@@ -729,7 +725,9 @@ for local in locais:
             {fig('ter6', 'Fotografia de terreno pertencente ao lote em tela.')}
             {fig('terfim', 'Fotografia de terreno pertencente ao lote em tela.')}
 
-            A residência, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme figuras {ref('int1')} a {ref('intfim')}.
+            A residência, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e 
+            porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), 
+            banheiro, cozinha e área de serviço, conforme figuras {ref('int1')} a {ref('intfim')}.
 
             {fig('int1', 'Fotografia do interior da residência.')}
             {fig('int2', 'Fotografia do interior da residência.')}
@@ -752,8 +750,8 @@ for local in locais:
         
         
     """
-    
-isol = r"""
+
+isol = """
 
 \section{ISOLAMENTO E PRESERVAÇÃO DO LOCAL \label{isolamento}}
 
@@ -818,11 +816,8 @@ A equipe técnica analisou meticulosamente o local em busca de evidências relac
 
 As figuras \ref{bal1} a \ref{bal6} exibem, no local da ocorrência, os elementos balísticos acima relatados
 :
-<<<<<<< HEAD
 %, e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima.
-=======
-, %e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima.
->>>>>>> main
+
 
 \f{bal1}{Fotografia indicando a localização de elemento(s) balístico(s).}
 \f{bal2}{Fotografia indicando a localização de elemento(s) balístico(s).}
@@ -852,7 +847,8 @@ Por fim, foram encontrados dois aparelhos de telefonia celular próximos à entr
 
 Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um cadáver, que
     se encontrava coberto por um lençol (figura \ref{lencol}). Após a remoção deste cobertor, tal cadáver 
-foi registrado em ângulos diferentes para permitir uma completa visualização da posição e condições iniciais em que foi encontrado. Estas fotografias estão exibidas nas figuras \ref{vit1} a \ref{vit4}:
+foi registrado em ângulos diferentes para permitir uma completa visualização da posição e condições iniciais em que foi 
+encontrado. Estas fotografias estão exibidas nas figuras \ref{vit1} a \ref{vit4}:
 
 \f{vit1}{Fotografia do cadáver na posição original, quando da chegada da Equipe Técnica.}
 \f{vit2}{Fotografia do cadáver na posição original, quando da chegada da Equipe Técnica.}
@@ -1023,17 +1019,17 @@ Eu, {\bf Betson Fernando Delgado dos Santos Andrade}, Perito Criminal deste Inst
 SECRETARIA DE DEFESA SOCIAL – GERÊNCIA GERAL DE POLÍCIA CIENTÍFICA – INSTITUTO DE CRIMINALÍSTICA PROFESSOR ARMANDO SAMICO – GRUPO ESPECIALIZADO EM PERÍCIAS DE HOMICÍDIO (GEPH)-DO IC - DHPP."""
 
 string_dict = {
-'<MACROS>': result_macros, 
+'<MACROS>': result_macros,
 '<INFO>': info,
 '<RODAPE>': rodape,
 '<TÍTULO>': titulo,
-'<HISTORICO>': hist, 
-'<OBJETIVO>': objetivo, 
-'<MATERIAIS>': materiais, 
+'<HISTORICO>': hist,
+'<OBJETIVO>': objetivo,
+'<MATERIAIS>': materiais,
 '<DESC_LOCAL>': descLocalGeral + descLocalDetalhe,
-'<ISOLAMENTO>': isol, 
-'<EXAMES>': exames, 
-'<CONCLUSÕES>': conc, 
+'<ISOLAMENTO>': isol,
+'<EXAMES>': exames,
+'<CONCLUSÕES>': conc,
 '<ENCERRAMENTO>': enc}
 
 new_str = str_replace(string_dict, file_str)
