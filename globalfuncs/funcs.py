@@ -58,11 +58,12 @@ def plural(frase: str):
 
     import re
     import json
+    from pathlib import Path
 
     pat = re.compile(r"\|(\w+)\|")
     matches = re.findall(pat, frase)
 
-    with open("../arquivos/dicPlural.json", "r") as d:
+    with open(Path.joinpath(Path(__file__).parents[1], "arquivos/dicPlural.json"), "r") as d:
         dic = json.loads(d.read())
         d.close()
 
