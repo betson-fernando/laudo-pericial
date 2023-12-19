@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, time, date
 import monthdelta
 import sys
 import shutil
-import os
+from pathlib import Path
 import re
 import subprocess
 import numpy as np
@@ -14,12 +14,14 @@ import urllib.request as urlreq
 import urllib.error as urlerr
 from zipfile import BadZipFile
 
-sys.path.insert(0, r'C:\Users\GEPH-IC\Documents\Betson\Laudo Pericial')
+SCRIPT_PATH = Path(__file__).parent
+sys.path.insert(0, str(SCRIPT_PATH))
+
 from Classes.Local import Local
+from Classes.Figuras import Figuras
 from globalfuncs.funcs import textbf, ref, fig
 import settings
 
-SCRIPT_PATH = os.path.realpath(os.path.dirname(__file__))
 
 # Definição de funções: #######################################
 
@@ -40,20 +42,20 @@ def open_sheet(path: str, sheetname: str or int, hd_index: int, col_names: {str:
             sheet = pd.read_excel(f_inner, sheet_name=sheetname, header=hd_index, usecols=col_names.values(), engine='openpyxl')
     except KeyError as e1:
         if 'Worksheet' in str(e1):
-            print(f"\nUma aba cujo nome foi informado na planilha de parâmetros não foi encontrada no arquivo \"{os.path.basename(path)}\".\nDescrição do erro: '{str(e1)}'")
+            print(f"\nUma aba cujo nome foi informado na planilha de parâmetros não foi encontrada no arquivo \"{Path(path).name}\".\nDescrição do erro: '{str(e1)}'")
         else:
             print(f"\nErro desconhecido. Investigar e isolar!\nDescrição do erro: '{str(e1)}'")
         sheet = None
         exit()
     except FileNotFoundError:
-        print(f"\nArquivo \"{os.path.basename(path)}\" não encontrado. Acesse o arquivo \"Parametros.xlsx\" e corrija o "
+        print(f"\nArquivo \"{Path(path).name}\" não encontrado. Acesse o arquivo \"Parametros.xlsx\" e corrija o "
               f"caminho.\nO programa será interrompido.")
         sheet = None
         shutil.rmtree(casodir_path)
         exit()
     except ValueError as e3:
         print(f"\nProvavelmente alguma coluna cujo nome foi informado na planilha de parâmetros não foi encontrada na "
-              f"planilha {os.path.basename(path)}>{sheetname}.\nDescrição do erro: '{str(e3)}'")
+              f"planilha {Path(path).name}>{sheetname}.\nDescrição do erro: '{str(e3)}'")
         sheet = None
         shutil.rmtree(casodir_path)
         exit()
@@ -63,11 +65,11 @@ def open_sheet(path: str, sheetname: str or int, hd_index: int, col_names: {str:
 def download_sheet(url: str, dest: str, stopiferror: bool = False):
     """Esta função tem o objeto de baixar uma planilha de uma URL.
     --> url : endereço onde se encontra a planilha;
-    --> dest : caminho para o arquivo em que ela será salva. Cria arquivo se não existir.
+    --> dest : endereço (contendo nome do arquivo) em que a planilha será salva. Cria arquivo se não existir.
     --> stopiferror: se houver qualquer erro no salvamento por fatores adversos, o programa será interrompido."""
 
     try:  # Tentar baixar a planilha em um arquivo temporário
-        temp_path = os.path.join(os.path.dirname(dest), "temp.xlsx")
+        temp_path = Path(dest).parent.joinpath("temp.xlsx")
         urlreq.urlretrieve(url, temp_path)
     except urlerr.URLError:  # Erro de indisponibilidade de internet
         # TODO: Diferenciar o erro de sem internet com erro de url errada, que levanta o mesmo urlerr.URLError.
@@ -93,7 +95,7 @@ def download_sheet(url: str, dest: str, stopiferror: bool = False):
                 print(f"URL existente, mas não possui acesso público.\nNão será possível gravar o arquivo em {dest}.\nO programa será fechado.")
                 shutil.rmtree(casodir_path)
                 exit()
-        os.replace(temp_path, dest)  # Grava arquivo "temp_path" em "dest", e deleta o primeiro.
+        Path(temp_path).replace(dest)  # Grava arquivo "temp_path" em "dest", e deleta o primeiro.
 
 
 def entrar_caso() -> [str, str, str]:
@@ -192,26 +194,26 @@ def createdirs(casoDirName: str, origPath: str, destPath: str, delete_origPath: 
 
     casoDirName = casoDirName.replace('/', '.')
     # Caminho para a pasta do caso em seu endereço final.
-    caso_destpath = os.path.join(destPath, casoDirName)
 
-    fotosOrigPath = os.path.join(origPath, casoDirName)
+    caso_destpath = Path(destPath).joinpath(casoDirName)
+    fotosOrigPath = Path(origPath).joinpath(casoDirName)
 
     # Se a pasta das fotos não for encontrada, abra um diálogo para selecionar:
-    if not os.path.isdir(fotosOrigPath):
+    if not Path(fotosOrigPath).is_dir():
         fotosOrigPath = tk.filedialog.askdirectory(title="Selecione a pasta onde estão as imagens do caso:",
                                                      initialdir=origPath)
 
-    shutil.copytree(os.path.join(SCRIPT_PATH, "MODELO HOMICÍDIO"), caso_destpath)
-    tex_destpath = os.path.join(caso_destpath, "Arquivos .TEX")
-    fotos_destpath = os.path.join(caso_destpath, "Fotografias/Descartadas")
-    os.rename(os.path.join(tex_destpath, "modelo.tex"), os.path.join(tex_destpath, f"{casoDirName}.tex"))
+    shutil.copytree(Path(SCRIPT_PATH).joinpath("MODELO HOMICÍDIO"), caso_destpath)
+    tex_destpath = Path(caso_destpath).joinpath("Arquivos .TEX")
+    fotos_destpath = Path(caso_destpath).joinpath("Fotografias/Descartadas")
+    Path(tex_destpath).joinpath("modelo.tex").rename(Path(tex_destpath).joinpath(f"{casoDirName}.tex"))
     shutil.copytree(fotosOrigPath, fotos_destpath)
     # TODO: garantir que todas as imagens foram copiadas (sugestão: shutil.disk_usage para comparar os tamanhos,
     #  shutil.scandir, ou filecmp.dircmp). Feito o anterior, excluir a pasta de origem.
 
     dir_comp = False  # Variável para futura comparação entre as pastas de origem e de destino.
     if delete_origPath and dir_comp:
-        os.removedirs(fotosOrigPath)
+        shutil.rmtree(fotosOrigPath)
 
     return caso_destpath
 
@@ -347,7 +349,7 @@ std_casoTgt = casoTgt
 # Ex: 49.10/2021 --> 0049.10/2021
 
 
-with open(os.path.join(SCRIPT_PATH, "Parametros.xlsx"), "rb") as f:
+with open(Path(SCRIPT_PATH).joinpath("Parametros.xlsx"), "rb") as f:
     # file_io_obj = io.BytesIO(f.read())
     par = pd.read_excel(f, sheet_name=[0, 1], engine='openpyxl')
 ender = par[0]
@@ -573,7 +575,7 @@ result_macros = string_info + string_vit + string_veic + string_bal
 # Renomear Pasta do caso para incluir número da rep:
 #repStr = fmt_values(rep.iloc[0]) #REP no formato de string
 newName = f"{casoTgt.replace('/','.')} - {repRes.split('/')[0]}"  # Novo nome da pasta do caso ("caso - rep")
-os.rename(casodir_path, f"{casoDestPath}/{newName}") # Renomear para o novo nome acima
+Path(casodir_path).rename(f"{casoDestPath}/{newName}") # Renomear para o novo nome acima
 casodir_path = f"{casoDestPath}/{newName}" # Atualização do caminho para a pasta do caso.
 
 file_path = f"{casodir_path}/Arquivos .TEX/{casoTgt.replace('/', '.')}.tex"
@@ -582,9 +584,9 @@ images_path = f"{casodir_path}/Fotografias/Descartadas"
 # ========================================== EDIÇÃO DO LAUDO ===========================================================
 # ======================================================================================================================
 
-f_in = open(file_path, mode="r", encoding='utf-8')
-file_str = f_in.read()
-f_in.close()
+with open(file_path, mode="r", encoding='utf-8') as f_in:
+    file_str = f_in.read()
+    f_in.close()
 
 tipoExameRes = tipoExameRes.lower()
 if tipoExameRes == "homicídio":
@@ -610,6 +612,38 @@ info += f"Caso: {casoRes}\nREP: {repRes}\nDelegado: {delegadoRes}\n"
 for local in locais:
     info += f"Local {local.locId}:\n{local.info()}"
 info += "\\end{comment}"
+
+
+# ============================= DECLARAÇÃO DAS FIGURAS =====================================
+
+figExt = Figuras(images_path, "ext", ["|A| |figura| <ref> |mostra| as condições do ambiente mediato no momento dos exames periciais", "O ambiente imediato se deu no interior de um lote, já exibido externamente |na| |figura| <ref>"], "Fotografia mostrando o local da ocorrência.")
+
+figTer = Figuras(images_path, "ter", "Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela flexível e translúcida. A área compreendia as porções anterior e laterais da residência, conforme |figura| <ref>:", "Fotografia de terreno pertencente ao lote em tela.")
+        
+figInt = Figuras(images_path, "int", ["A residência, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme |figura| <ref>:", "O local imediato (onde se encontrava o cadáver) era o XXXXX, conforme pode ser observado |na| |figura| {figInt.ref}"], "Fotografia do interior da residência.")
+
+figLencol = Figuras(images_path, "lencol", ["Em decorrência disto, foram verificados sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e lesões.", "se encontrava coberto por um cobertor (|figura| <ref>). Após descoberto, tal cadáver"], "Fotografia, obtida quando da chegada da Equipe Técnica, do cadáver coberta.")
+
+figBolso = Figuras(images_path, "bolso", ["Também foram encontradas evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>.", "Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela."], "Fotografia do bolso do cadáver.")
+
+figCam = Figuras(images_path, "cam", "Tais câmeras foram fotografadas, e estão exibidas |na| |figura| <ref>:", "Fotografia de câmera(s) no local.")
+
+figBal = Figuras(images_path, "bal", "|A| |figura| <ref> |exibe|, no local da ocorrência, o(s) elemento(s) balístico(s) acima relatado(s)\n%, e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima\n:", "Fotografia indicando a localização de elemento(s) balístico(s).")
+
+figVit = Figuras(images_path, "vit", ["|Esta| |fotografia| |está| |exibida| |na| |figura| <ref>:", "|figura| <ref>"], "Fotografia do cadáver em sua posição original.")
+
+figVitMov = Figuras(images_path, "vitmov", "Também |foi| |realizada| |fotografia| após a remoção da vítima até local adequado à Análise Perinecroscópica, conforme |figura| <ref>:", "Fotografia do cadáver após a sua remoção a local adequado.")
+
+figTat = Figuras(images_path, "tat", "Na sua epiderme |foi| |constatada| |tatuagem|, |fotografada| e |exibida| |na| |figura| <ref>:", "Fotografia de tatuagem no cadáver.")
+
+figPert = Figuras(images_path, "pert", "|Foi| |feito| |registro| |fotográfico| destes itens, que estão exibidos |na| |figura| <ref>:", "Fotografia de objeto(s) encontrado(s) com o cadáver.")
+
+figLes = Figuras(images_path, "les", "|A| |figura| <ref> |exibe| as lesões acima relatadas\n%,e as numerações nas imagens correspondem àquelas que identificam as lesões na lista acima\n:", "Lesões constatadas no cadáver.")
+
+figEsq = Figuras(images_path, "esq", r"|A| |figura| <ref> |exibe|, através de |esquema|, as lesões encontradas no cadáver. Em |tal| |esquema|, as lesões representadas por um círculo são características de entrada de projétil, enquanto as representadas por um ``X'', saída de projétil, e, por fim, as indicadas por um quadrado não puderam ter suas características identificadas no momento do Exame Pericial.", "Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. \textbf{Medicina Legal Prática Compreensível}. Barra do Garças: Ed. do Autor, 2010.")
+
+figBalVit = Figuras(images_path, "balvit", "Por fim, foi encontrado um projétil sob cadáver, conforme |figura| <ref>:", "Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver.")
+
 
 hist = f"""
 \\section{{HISTÓRICO DO CASO}}
@@ -672,14 +706,14 @@ for local in locais:
     lat = local.coord[0]
     lon = local.coord[1]
     
-    with open(os.path.join(images_path, mapName + '.jpg'), 'wb') as mapa, open(os.path.join(images_path, mapZoomName + '.jpg'), 'wb') as mapaZoom:
+    with open(Path(images_path).joinpath(mapName + '.jpg'), 'wb') as mapa, open(Path(images_path).joinpath(mapZoomName + '.jpg'), 'wb') as mapaZoom:
         mapa.write(local.getMaps(zoom=settings.LOW_ZOOM))
         mapa.close()
         
         mapaZoom.write(local.getMaps(zoom=settings.HIGH_ZOOM))
         mapaZoom.close()
 
-    figLocal = Figuras(images_path, "ext", "|A| |figura| <ref> |mostra| as condições do ambiente mediato no momento dos exames periciais", "Fotografia mostrando o local da ocorrência.\n\n")    
+    
     descLocalDetalhe += \
         r"""\subsection{""" + (f'Local {local.locId}: ' if len(locais) > 1 else '') + """AMBIENTES MEDIATO E IMEDIATO}\n\n"""\
         \
@@ -693,30 +727,24 @@ for local in locais:
         {fig(f'{mapZoomName}', 'Mapa em escala ampliada no qual o marcador vermelho indica o local da ocorrência.')}
          
 
-        {figLocal.intro}:\n\n{figLocal.figsTex}\n\n"""
+        {figExt.frase[0]}
+        
+        {figExt.figsTex}
+        
+        
+        """
         
 
     if local.tipo.lower() in ['interno', 'misto']:
-    
-        figTer = Figuras(images_path, "ter", "|figura| <ref>", "Fotografia de terreno pertencente ao lote em tela.")
-        figInt = Figuras(images_path, "int", "|figura| <ref>", "Fotografia do interior da residência.")
         
-        descLocalDetalhe += \
-            f"""O ambiente imediato se deu no interior de um imóvel, já exibido externamente na(s) figura(s) {figLocal.ref}.
-            
-            Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela flexível e translúcida. A área compreendia as porções anterior e laterais da residência, conforme 
-            {figTer.intro}:\n\n{figLocal.figsTex}
-
-
-            A residência, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme {figInt.intro}:\n\n{figInt.figsTex}.
-
-            
-
-            %O local imediato (onde se encontrava o cadáver) era o XXXXX, conforme pode ser observado na(s) figura(s) {figInt.ref}.
+        if figTer.numFigs + figIint.numFigs > 0: # Caso houver terreno ou interior de residência fotografados:
+            descLocalDetalhe += figExt.frase[1] + "\n\n"
         
+        # Descrição do terreno
+        descLocalDetalhe += figTer.frase + "\n\n" + figExt.figsTex + "\n\n"
         
-    """
-    
+        descLocalDetalhe += figInt.frase[0] + "\n\n" + figInt.figsTex + "\n\n" + figInt.frase[1] + "\n\n"
+
 isol = r"""
 
 \section{ISOLAMENTO E PRESERVAÇÃO DO LOCAL \label{isolamento}}
@@ -732,127 +760,99 @@ No momento da chegada da Equipe Técnica, se faziam presentes alguns policiais m
 %É importante ressaltar que havia poucas pessoas além das pertencentes às Operativas Policiais no momento dos Trabalhos Periciais. Todavia, 
 %É importante ressaltar que não havia pessoas além das pertencentes às Operativas Policiais no momento dos Trabalhos Periciais. Todavia, 
 %
-antes da presença da Polícia no local, transeuntes e/ou espectadores podem ter alterado, ocultado, ou removido, voluntariamente ou não, evidências de valor elucidativo no que concerne à autoria e/ou dinâmica das ações dos envolvidos na ocorrência em tela.
-%Em decorrência disto, foram verificados sinais de alteração no local de crime, a saber, a cobertura do cadáver por um lençol (figura \ref{lencol}), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e lesões.
+antes da presença da Polícia no local, transeuntes e/ou espectadores podem ter alterado, ocultado, ou removido, voluntariamente ou não, evidências de valor elucidativo no que concerne à autoria e/ou dinâmica das ações dos envolvidos na ocorrência em tela."""
 
-%\f{lencol}{Fotografia, obtida quando da chegada da Equipe Técnica, do cadáver coberto por um lençol.}
+isol += figLencol.frase[0] + "\n\n" + figLencol.figsTex + "\n" + figBolso.frase[0] + "\n\n" + figBolso.figsTex + "\n\n" + figBolso.frase[1] + "\n"
 
-%Também foram encontradas evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra a figura \ref{bolso}.
 
-%\f{bolso}{Fotografia do bolso do cadáver.}
-
-%Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela.
-
-"""
-
+# ============================================== SEÇÃO DE EXAMES ======================================================
 exames = r"""
 \section{EXAMES}
 
 \subsection{DO LOCAL}
 
-%Ao chegar ao local, a Equipe Técnica constatou a existência de várias câmeras, a saber:
+"""
+
+if figCam.numFigs > 0: 
+
+    exames += f"""
+Ao chegar ao local, a Equipe Técnica constatou a existência de várias câmeras, a saber:
+
+\begin{{itemize}}
+
+	\item \textbf{{Uma (01)}} câmera no Edifício Bella Vista, localizado na R. dos Navegantes;
+	\item \textbf{{Três (03)}} câmeras no Edifício Praça do Mar, localizado na R. dos Navegantes, nº 4862;
+	\item \textbf{{Uma (01)}} câmera no Edifício Canárias, localizado na R. Dr. Nilo Dornelas Câmara, nº 90;
+	\item \textbf{{Uma (01)}} câmera na Galeria Cidade Sul, localizada na Av. Conselheiro Aguiar, nº 5025 (mais precisamente na esquina desta avenina com a R. Dr. Nilo Dornelas Câmara).
+
+\end{{itemize}}
+
+{figCam.frase}
+
+{figCam.figsTex}        
+        
+"""
+
+if figBal.numFigs > 0:
+    exames += f"""
+    
+        A equipe técnica analisou meticulosamente o local em busca de evidências relacionadas à ocorrência, encontrando elementos balísticos na quantidade e localização abaixo relacionados:
+
+        \begin{{enumerate}}
+
+            \item Estojo encontrado próximo ao cadáver;
+            \item Projétil encontrado próximo ao cadáver;
+            \item Estojo encontrado distante do cadáver, na direção da estação de tratamento de esgoto e da ponte sobre o Rio Capibaribe.
+
+        \end{{enumerate}}
+
+        {figBal.frase}
+
+        {figBal.figsTex}
+
+        Estes elementos balísticos foram coletados, lacrados termicamente em invólucros plásticos, e enviados ao \bal.
+        """
+exames += r"""
+%Por fim, foram encontrados dois aparelhos de telefonia celular próximos à entrada lateral já descrita neste laudo (ver figura \ref{celular}) que, no entendimento do perito, podem estar relacionados ao crime:
 
 %\begin{itemize}
 
-%	\item \textbf{Uma (01)} câmera no Edifício Bella Vista, localizado na R. dos Navegantes;
-%	\item \textbf{Três (03)} câmeras no Edifício Praça do Mar, localizado na R. dos Navegantes, nº 4862;
-%	\item \textbf{Uma (01)} câmera no Edifício Canárias, localizado na R. Dr. Nilo Dornelas Câmara, nº 90;
-%	\item \textbf{Uma (01)} câmera na Galeria Cidade Sul, localizada na Av. Conselheiro Aguiar, nº 5025 (mais precisamente na esquina desta avenina com a R. Dr. Nilo Dornelas Câmara).
+%	\item \textbf{Um (01)} celular da marca BLU, modelo Jenny TV 2.8 T276T I 13, IMEI 1 número 354278078362898, IMEI 2 número 35427807815297, com um chip da operadora OI com número de série 8955313929 862374013;
+%	\item \textbf{Um (01)} celular da marca PANASONIC, modelo não identificado, IMEI 1 número 35424507221845, IMEI 2 número 354245072218483, com chip da operadora Claro com número de série 8955 0534 9701 7294 3471.
 
 %\end{itemize}
 
+%\f{celular}{Fotografia dos celulares encontrados.}
+
+%É importante salientar que o local no qual os celulares foram encontrados não pode ser registrado em fotografia devido a defeitos de ordem técnica na câmera fotográfica utilizada pelo Perito Criminal.
+
+"""
+
+exames += f"""
+\subsection{{DO CADÁVER}}
+
+Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um cadáver, que {figLencol.frase[1]} foi registrado em ângulos diferentes para permitir uma completa visualização da posição e condições iniciais em que foi encontrado. {figVit.frase[0]}
+
+{figVit.figsTex}
+
+{figVitMov.frase}
+
+{figVitMov.figsTex}
 
 
-%Tais câmeras foram fotografadas, e estão exibidas nas figuras \ref{cam1} a \ref{camfim}:
-
-%\f{cam1}{Fotografia de câmera no local.}
-%\f{cam2}{Fotografia de câmera no local.}
-%\f{cam3}{Fotografia de câmera no local.}
-%\f{camfim}{Fotografia de câmera no local.}
-
-A equipe técnica analisou meticulosamente o local em busca de evidências relacionadas à ocorrência, encontrando elementos balísticos na quantidade e localização abaixo relacionados:
-
-\begin{enumerate}
-
-	\item Estojo encontrado próximo ao cadáver;
-	\item Projétil encontrado próximo ao cadáver;
-	\item Estojo encontrado distante do cadáver, na direção da estação de tratamento de esgoto e da ponte sobre o Rio Capibaribe.
-
-\end{enumerate}
-
-As figuras \ref{bal1} a \ref{bal6} exibem, no local da ocorrência, os elementos balísticos acima relatados
-:
-<<<<<<< HEAD
-%, e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima.
-=======
-, %e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima.
->>>>>>> main
-
-\f{bal1}{Fotografia indicando a localização de elemento(s) balístico(s).}
-\f{bal2}{Fotografia indicando a localização de elemento(s) balístico(s).}
-\f{bal3}{Fotografia indicando a localização de elemento(s) balístico(s).}
-\f{bal4}{Fotografia indicando a localização de elemento(s) balístico(s).}
-\f{bal5}{Fotografia indicando a localização de elemento(s) balístico(s).}
-\f{bal6}{Fotografia indicando a localização de elemento(s) balístico(s).}
-
-Estes elementos balísticos foram coletados, lacrados termicamente em invólucros plásticos, e enviados ao \bal.
-
-Por fim, foram encontrados dois aparelhos de telefonia celular próximos à entrada lateral já descrita neste laudo (ver figura \ref{celular}) que, no entendimento do perito, podem estar relacionados ao crime:
-
-\begin{itemize}
-
-	\item \textbf{Um (01)} celular da marca BLU, modelo Jenny TV 2.8 T276T I 13, IMEI 1 número 354278078362898, IMEI 2 número 35427807815297, com um chip da operadora OI com número de série 8955313929 862374013;
-	\item \textbf{Um (01)} celular da marca PANASONIC, modelo não identificado, IMEI 1 número 35424507221845, IMEI 2 número 354245072218483, com chip da operadora Claro com número de série 8955 0534 9701 7294 3471.
-
-\end{itemize}
-
-\f{celular}{Fotografia dos celulares encontrados.}
-
-É importante salientar que o local no qual os celulares foram encontrados não pode ser registrado em fotografia devido a defeitos de ordem técnica na câmera fotográfica utilizada pelo Perito Criminal.
-
-
-
-\subsection{DO CADÁVER}
-
-Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um cadáver, que
-    se encontrava coberto por um lençol (figura \ref{lencol}). Após a remoção deste cobertor, tal cadáver 
-foi registrado em ângulos diferentes para permitir uma completa visualização da posição e condições iniciais em que foi encontrado. Estas fotografias estão exibidas nas figuras \ref{vit1} a \ref{vit4}:
-
-\f{vit1}{Fotografia do cadáver na posição original, quando da chegada da Equipe Técnica.}
-\f{vit2}{Fotografia do cadáver na posição original, quando da chegada da Equipe Técnica.}
-\f{vit3}{Fotografia do cadáver na posição original, quando da chegada da Equipe Técnica.}
-\f{vit4}{Fotografia do cadáver na posição original, quando da chegada da Equipe Técnica.}
-
-%Também foram realizadas fotografias após a remoção da vítima até local adequado à Análise Perinecroscópica, conforme figuras \ref{vit5} a \ref{vit8}:
-
-%\f{vit5}{Fotografia do cadáver após sua remoção a local adequado.}
-%\f{vit6}{Fotografia do cadáver após sua remoção a local adequado.}
-%\f{vit7}{Fotografia do cadáver após sua remoção a local adequado.}
-%\f{vit8}{Fotografia do cadáver após sua remoção a local adequado.}
-
-
-\subsubsection{IDENTIFICAÇÃO}
+\subsubsection{{IDENTIFICAÇÃO}}
 
 Mediante inspeção preliminar, foi constatado que este cadáver pertencia a um indivíduo do sexo masculino, tipo étnico faioderma, com cabelos ulótricos, barba e bigode presentes, de compleição normolínea, aparentando ter um metro e setenta centímetros de altura (1,70m) e aproximadamente 
-	\idade{ }
+	\idade{{ }}
 	%vinte (20) anos 
 de idade.
 
-Na sua epiderme foram constatadas tatuagens, fotografadas e exibidas nas figuras \ref{tat1} a \ref{tatfim}:
+{figTat.frase}
 
-\f{tat1}{Fotografia de tatuagem no cadáver.}
-\f{tat2}{Fotografia de tatuagem no cadáver.}
-\f{tat3}{Fotografia de tatuagem no cadáver.}
-\f{tat4}{Fotografia de tatuagem no cadáver.}
-\f{tat5}{Fotografia de tatuagem no cadáver.}
-\f{tat6}{Fotografia de tatuagem no cadáver.}
-\f{tat7}{Fotografia de tatuagem no cadáver.}
-\f{tat8}{Fotografia de tatuagem no cadáver.}
-\f{tat9}{Fotografia de tatuagem no cadáver.}
-\f{tat10}{Fotografia de tatuagem no cadáver.}
-\f{tat11}{Fotografia de tatuagem no cadáver.}
-\f{tatfim}{Fotografia de tatuagem no cadáver.}
+{figTat.figsTex}
 
+"""
+exames += r"""
 %No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise, motivo pelo qual sua identidade foi declarada como sendo desconhecida. 
 %No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise. Contudo, a informação de familiares, aliada a pesquisa no sistema "Polícia Ágil", da Secretaria de Defesa Social de Pernambuco, revelou se tratar de \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
 No momento dos exames periciais, foi encontrada uma Carteira de Identidade pertencente ao indivíduo cujo cadáver estava sob análise, constatando que seu nome era \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figuras \ref{ida} e \ref{idv}).
@@ -866,38 +866,40 @@ Foi atribuído ao cadáver o Número de Identificação Cadavérica (NIC) \nic, 
 \f{rosto}{Fotografia do rosto do cadáver.}
 \f{pic}{Fotografia da PIC colocada no cadáver.}
 \f{bic}{Fotografia do BIC preenchido e encaminhado ao Instituto de Medicina Legal (IML).}
+"""
 
-\subsubsection{VESTES E ACESSÓRIOS}
+exames += f"""
+\subsubsection{{VESTES E ACESSÓRIOS}}
  
-O cadáver ora periciado trajava camisa cinza, bermuda {\sl tactel} na cor predominante preta, e calçava um par de sandálias de cores preta e vermelha (figuras \ref{vit1} a \ref{vit4}).
+O cadáver ora periciado trajava camisa cinza, bermuda {{\sl tactel}} na cor predominante preta, e calçava um par de sandálias de cores preta e vermelha ({figVit.frase[1]})."""
 
-Ao analisar as adjacências e os bolsos presentes nas vestimentas do cadáver, foram encontrados os seguintes itens pessoais:
+if figPert.numFigs > 0:
 
-\begin{itemize}
-	\item
-	\item
-	\item
-\end{itemize}
+    exames += r"""
+    Ao analisar as adjacências e os bolsos presentes nas vestimentas do cadáver, foram encontrados os seguintes itens pessoais:
 
-Foram feitos registros fotográficos destes itens, que estão exibidos nas figuras \ref{pert1} a \ref{pertfim}:
+    \begin{itemize}
+        \item
+        \item
+        \item
+    \end{itemize}"""
 
-\f{pert1}{Fotografia de objeto(s) encontrado(s) com o cadáver.}
-\f{pert2}{Fotografia de objeto(s) encontrado(s) com o cadáver.}
-\f{pert3}{Fotografia de objeto(s) encontrado(s) com o cadáver.}
-\f{pert4}{Fotografia de objeto(s) encontrado(s) com o cadáver.}
-\f{pertfim}{Fotografia de objeto(s) encontrado(s) com o cadáver.}
+exames += f"""
+{figPert.frase}
 
-\subsubsection{POSIÇÃO}
+{figPert.figsTex}
+
+\subsubsection{{POSIÇÃO}}
  
-Quando da chegada da Equipe Técnica, o cadáver estava em decúbito ventral, com os membros flexionados, à exceção do inferior esquerdo, que se encontrava estendido (figuras \ref{vit1} a \ref{vit4}).
+Quando da chegada da Equipe Técnica, o cadáver estava em decúbito ventral, com os membros flexionados, à exceção do inferior esquerdo, que se encontrava estendido ({figVit.frase[1]}).
 
-\subsubsection{PERINECROSCOPIA}
+\subsubsection{{PERINECROSCOPIA}}
 
 %TODO : Descrever rigidez, manchas hipostáticas, etc
 
 Mediante Análise Perinecroscópica detalhada, foram constatadas lesões perfurocontusas provocadas por projéteis disparados por arma de fogo, a saber:
 
-\begin{enumerate}
+\begin{{enumerate}}
 	\item Lesão característica de saída de projétil na região epigástrica;
 	\item Lesão característica de saída de projétil na região epigástrica;
 	\item Lesão característica de entrada de projétil no flanco esquerdo;
@@ -918,48 +920,23 @@ Mediante Análise Perinecroscópica detalhada, foram constatadas lesões perfuro
 	\item Lesão característica de entrada de projétil na região cervical;
 	\item Lesão característica de entrada de projétil na região occipital;
 	\item Lesão característica de entrada de projétil na região auricular esquerda.
-\end{enumerate}
+\end{{enumerate}}
 
-As figuras \ref{les1} a \ref{les19} exibem as lesões acima relatadas
-	:
-	%, e as numerações nas imagens correspondem àquelas que identificam as lesões na lista acima.
+{figLes.frase}
 
-\f{les1}{Lesões constatadas no cadáver.}
-\f{les2}{Lesões constatadas no cadáver.}
-\f{les3}{Lesões constatadas no cadáver.}
-\f{les4}{Lesões constatadas no cadáver.}
-\f{les5}{Lesões constatadas no cadáver.}
-\f{les6}{Lesões constatadas no cadáver.}
-\f{les7}{Lesões constatadas no cadáver.}
-\f{les8}{Lesões constatadas no cadáver.}
-\f{les9}{Lesões constatadas no cadáver.}
-\f{les10}{Lesões constatadas no cadáver.}
-\f{les11}{Lesões constatadas no cadáver.}
-\f{les12}{Lesões constatadas no cadáver.}
-\f{les13}{Lesões constatadas no cadáver.}
-\f{les14}{Lesões constatadas no cadáver.}
-\f{les15}{Lesões constatadas no cadáver.}
-\f{les16}{Lesões constatadas no cadáver.}
-\f{les17}{Lesões constatadas no cadáver.}
-\f{les18}{Lesões constatadas no cadáver.}
-\f{les19}{Lesões constatadas no cadáver.}
+{figLes.figsTex}
 
-As figuras \ref{esq1} a \ref{esq5} exibem, através de esquemas, as lesões encontradas no cadáver.
-Em tais esquemas, as lesões representadas por um círculo são características de entrada de projétil, enquanto as representadas por um ``X'', saída de projétil, e, por fim, as indicadas por um quadrado não puderam ter suas características identificadas no momento do Exame Pericial:
+{figEsq.frase}
 
-\f{esq1}{Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. \textbf{Medicina Legal Prática Compreensível}. Barra do Garças: Ed. do Autor, 2010.}
-\f{esq2}{Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. \textbf{Medicina Legal Prática Compreensível}. Barra do Garças: Ed. do Autor, 2010.}
-\f{esq3}{Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. \textbf{Medicina Legal Prática Compreensível}. Barra do Garças: Ed. do Autor, 2010.}
-\f{esq4}{Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. \textbf{Medicina Legal Prática Compreensível}. Barra do Garças: Ed. do Autor, 2010.}
-\f{esq5}{Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. \textbf{Medicina Legal Prática Compreensível}. Barra do Garças: Ed. do Autor, 2010.}
+{figEsq.figsTex}
 
 Tais lesões, bem como possivelmente outras que não foram encontradas quando da perícia no local, deverão ser adequadamente descritas e fotografadas quando da Perícia Tanatoscópica, a ser realizada por médicos legistas do Instituto de Medicina Legal Antônio Persivo Cunha - IML.
 
-É importante ressaltar que foi encontrada uma lesão típica de defesa no antebraço direito (ver figura \ref{antebraco}).
+%É importante ressaltar que foi encontrada uma lesão típica de defesa no antebraço direito (ver figura \ref{{antebraco}}).
 
-%Também foi encontrado um projétil dentro das vestes do cadáver, conforme figura \ref{balvit1}:
+{figBalVit.frase}
 
-%\f{balvit1}{Fotografia de elemento balístico encontrado dentro das vestes do cadáver.}
+{figBalVit.figsTex}
 
 """
 

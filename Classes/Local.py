@@ -1,12 +1,13 @@
 import sys
-from os import path
+from os import path  # gradativamente trocar os por pathlib
+from pathlib import Path
 import requests
 import numpy as np
 import re
 from textwrap import dedent
 from globalfuncs.funcs import testNumber, testEmpty
 
-sys.path.insert(0, r'C:\Users\GEPH-IC\Documents\Betson\Laudo Pericial')
+sys.path.insert(0, str(Path(__file__).parents[1]))
 import settings
 
 

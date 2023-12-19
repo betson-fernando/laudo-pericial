@@ -63,7 +63,7 @@ def plural(frase: str):
     pat = re.compile(r"\|(\w+)\|")
     matches = re.findall(pat, frase)
 
-    with open(Path.joinpath(Path(__file__).parents[1], "arquivos/dicPlural.json"), "r") as d:
+    with open(Path(__file__).parents[1].joinpath( "arquivos/dicPlural.json"), "r", encoding='utf-8') as d:
         dic = json.loads(d.read())
         d.close()
 
