@@ -95,8 +95,10 @@ def download_sheet(url: str, dest: str, stopiferror: bool = False):
                 print(f"URL existente, mas não possui acesso público.\nNão será possível gravar o arquivo em {dest}.\nO programa será fechado.")
                 shutil.rmtree(casodir_path)
                 exit()
-        Path(temp_path).replace(dest)  # Grava arquivo "temp_path" em "dest", e deleta o primeiro.
-
+        try:
+            Path(temp_path).replace(dest)  # Grava arquivo "temp_path" em "dest", e deleta o primeiro.
+        except PermissionError:
+            sys.exit(f"\nProvavelmente o arquivo {dest} está aberto. Feche-o e reexecute o programa.")
 
 def entrar_caso() -> [str, str, str]:
     """Esta função solicita entrar o número do caso no formato correto, compara com o padrão, e, se estiver errado,
@@ -518,7 +520,7 @@ if open_vit:
               f"O programa será encerrado. Corrija e re-execute.")
         row_vit = pd.DataFrame([])
         exit()
-    except MergeError():  # Quando as colunas do nic não têm o mesmo nome entre as planilhas.
+    except pd.errors.MergeError:  # Quando as colunas do nic não têm o mesmo nome entre as planilhas.
         print(f"Aparentemente, o nome da coluna 'nic' não coincide na tabela da vítima preenchida na base e a tabela do formulário da vítima. Observe:\n"
               f"Colunas da tabela de vítimas preenchida na base:\n"
               f"{row_vit_base.columns}\n"
@@ -527,6 +529,7 @@ if open_vit:
               f"O programa será encerrado. Corrija a planilha de formulário da vítima e re-execute.")
         row_vit = pd.DataFrame([])
         exit()
+
 
     dataNasc = row_vit['dataNasc']
     numDoc = row_vit['numDoc']
@@ -616,7 +619,7 @@ info += "\\end{comment}"
 
 # ============================= DECLARAÇÃO DAS FIGURAS =====================================
 
-figExt = Figuras(images_path, "ext", ["|A| |figura| <ref> |mostra| as condições do ambiente mediato no momento dos exames periciais", "O ambiente imediato se deu no interior de um lote, já exibido externamente |na| |figura| <ref>"], "Fotografia mostrando o local da ocorrência.")
+figExt = Figuras(images_path, "ext", ["|A| |figura| <ref> |mostra| as condições do ambiente mediato no momento dos exames periciais:", "O ambiente imediato se deu no interior de um lote, já exibido externamente |na| |figura| <ref>"], "Fotografia mostrando o local da ocorrência.")
 
 figTer = Figuras(images_path, "ter", "Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela flexível e translúcida. A área compreendia as porções anterior e laterais da residência, conforme |figura| <ref>:", "Fotografia de terreno pertencente ao lote em tela.")
         
@@ -721,7 +724,7 @@ for local in locais:
         f"""
         Especificamente, no que concerne ao local mediato, a via pela qual se deu acesso à ocorrência permitia tráfego nos dois sentidos, possuía calçadas transitáveis por pedestres, com iluminação pública adequada e, em suas margens, havia casas de padrões similares às descritas acima.
         
-        O ambiente imediato se deu no endereço {textbf(f"{local.rua}, {local.bairro}, {local.municipio} - PE")}. Mais especificamente, esta localidade pode ser representada pelas coordenadas geográficas cartesianas {textbf(f'{lat},{lon}')}. Esta localização também se encontra representada através das figuras {ref(mapName)} e {ref(mapZoomName)}, que mostram fotografias do local da ocorrência obtidas por meios aeroespaciais (fonte: {{\sl Google Earth}}).
+        O ambiente imediato se deu no endereço {textbf(f"{local.rua}, {local.bairro}, {local.municipio} - PE")}. Mais especificamente, esta localidade pode ser representada pelas coordenadas geográficas cartesianas {textbf(f'{lat},{lon}')}. Esta localização também se encontra representada através das figuras {ref(mapName)} e {ref(mapZoomName)}, que mostram fotografias do local da ocorrência obtidas por meios aeroespaciais (fonte: {{\\sl Google Earth}}).
 
         {fig(f'{mapName}', 'Mapa em escala reduzida no qual o marcador vermelho indica o local da ocorrência.')}
         {fig(f'{mapZoomName}', 'Mapa em escala ampliada no qual o marcador vermelho indica o local da ocorrência.')}
@@ -778,14 +781,14 @@ if figCam.numFigs > 0:
     exames += f"""
 Ao chegar ao local, a Equipe Técnica constatou a existência de várias câmeras, a saber:
 
-\begin{{itemize}}
+\\begin{{itemize}}
 
-	\item \textbf{{Uma (01)}} câmera no Edifício Bella Vista, localizado na R. dos Navegantes;
-	\item \textbf{{Três (03)}} câmeras no Edifício Praça do Mar, localizado na R. dos Navegantes, nº 4862;
-	\item \textbf{{Uma (01)}} câmera no Edifício Canárias, localizado na R. Dr. Nilo Dornelas Câmara, nº 90;
-	\item \textbf{{Uma (01)}} câmera na Galeria Cidade Sul, localizada na Av. Conselheiro Aguiar, nº 5025 (mais precisamente na esquina desta avenina com a R. Dr. Nilo Dornelas Câmara).
+	\\item \\textbf{{Uma (01)}} câmera no Edifício Bella Vista, localizado na R. dos Navegantes;
+	\\item \\textbf{{Três (03)}} câmeras no Edifício Praça do Mar, localizado na R. dos Navegantes, nº 4862;
+	\\item \\textbf{{Uma (01)}} câmera no Edifício Canárias, localizado na R. Dr. Nilo Dornelas Câmara, nº 90;
+	\\item \\textbf{{Uma (01)}} câmera na Galeria Cidade Sul, localizada na Av. Conselheiro Aguiar, nº 5025 (mais precisamente na esquina desta avenina com a R. Dr. Nilo Dornelas Câmara).
 
-\end{{itemize}}
+\\end{{itemize}}
 
 {figCam.frase}
 
@@ -798,38 +801,39 @@ if figBal.numFigs > 0:
     
         A equipe técnica analisou meticulosamente o local em busca de evidências relacionadas à ocorrência, encontrando elementos balísticos na quantidade e localização abaixo relacionados:
 
-        \begin{{enumerate}}
+        \\begin{{enumerate}}
 
-            \item Estojo encontrado próximo ao cadáver;
-            \item Projétil encontrado próximo ao cadáver;
-            \item Estojo encontrado distante do cadáver, na direção da estação de tratamento de esgoto e da ponte sobre o Rio Capibaribe.
+            \\item Estojo encontrado próximo ao cadáver;
+            \\item Projétil encontrado próximo ao cadáver;
+            \\item Estojo encontrado distante do cadáver, na direção da estação de tratamento de esgoto e da ponte sobre o Rio Capibaribe.
 
-        \end{{enumerate}}
+        \\end{{enumerate}}
 
         {figBal.frase}
 
         {figBal.figsTex}
 
-        Estes elementos balísticos foram coletados, lacrados termicamente em invólucros plásticos, e enviados ao \bal.
+        Estes elementos balísticos foram coletados, lacrados termicamente em invólucros plásticos, e enviados ao \\bal.
         """
+        
 exames += r"""
-%Por fim, foram encontrados dois aparelhos de telefonia celular próximos à entrada lateral já descrita neste laudo (ver figura \ref{celular}) que, no entendimento do perito, podem estar relacionados ao crime:
+%Por fim, foram encontrados dois aparelhos de telefonia celular próximos à entrada lateral já descrita neste laudo (ver figura \\ref{celular}) que, no entendimento do perito, podem estar relacionados ao crime:
 
-%\begin{itemize}
+%\\begin{itemize}
 
-%	\item \textbf{Um (01)} celular da marca BLU, modelo Jenny TV 2.8 T276T I 13, IMEI 1 número 354278078362898, IMEI 2 número 35427807815297, com um chip da operadora OI com número de série 8955313929 862374013;
-%	\item \textbf{Um (01)} celular da marca PANASONIC, modelo não identificado, IMEI 1 número 35424507221845, IMEI 2 número 354245072218483, com chip da operadora Claro com número de série 8955 0534 9701 7294 3471.
+%	\\item \\textbf{Um (01)} celular da marca BLU, modelo Jenny TV 2.8 T276T I 13, IMEI 1 número 354278078362898, IMEI 2 número 35427807815297, com um chip da operadora OI com número de série 8955313929 862374013;
+%	\\item \\textbf{Um (01)} celular da marca PANASONIC, modelo não identificado, IMEI 1 número 35424507221845, IMEI 2 número 354245072218483, com chip da operadora Claro com número de série 8955 0534 9701 7294 3471.
 
-%\end{itemize}
+%\\end{itemize}
 
-%\f{celular}{Fotografia dos celulares encontrados.}
+%\\f{celular}{Fotografia dos celulares encontrados.}
 
 %É importante salientar que o local no qual os celulares foram encontrados não pode ser registrado em fotografia devido a defeitos de ordem técnica na câmera fotográfica utilizada pelo Perito Criminal.
 
 """
 
 exames += f"""
-\subsection{{DO CADÁVER}}
+\\subsection{{DO CADÁVER}}
 
 Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um cadáver, que {figLencol.frase[1]} foi registrado em ângulos diferentes para permitir uma completa visualização da posição e condições iniciais em que foi encontrado. {figVit.frase[0]}
 
@@ -840,12 +844,14 @@ Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um
 {figVitMov.figsTex}
 
 
-\subsubsection{{IDENTIFICAÇÃO}}
+\\subsubsection{{IDENTIFICAÇÃO}}
 
 Mediante inspeção preliminar, foi constatado que este cadáver pertencia a um indivíduo do sexo masculino, tipo étnico faioderma, com cabelos ulótricos, barba e bigode presentes, de compleição normolínea, aparentando ter um metro e setenta centímetros de altura (1,70m) e aproximadamente 
-	\idade{{ }}
+	\\idade{{ }}
 	%vinte (20) anos 
-de idade.
+de idade (figura \\ref{{rosto}}).
+
+\\f{{rosto}}{{Fotografia do rosto do cadáver.}}
 
 {figTat.frase}
 
@@ -863,15 +869,14 @@ Foi atribuído ao cadáver o Número de Identificação Cadavérica (NIC) \nic, 
 
 %\f{ida}{Fotografia do anverso do documento de identificação encontrado com o cadáver.}
 %\f{idv}{Fotografia do verso do documento de identificação encontrado com o cadáver.}
-\f{rosto}{Fotografia do rosto do cadáver.}
 \f{pic}{Fotografia da PIC colocada no cadáver.}
 \f{bic}{Fotografia do BIC preenchido e encaminhado ao Instituto de Medicina Legal (IML).}
 """
 
 exames += f"""
-\subsubsection{{VESTES E ACESSÓRIOS}}
+\\subsubsection{{VESTES E ACESSÓRIOS}}
  
-O cadáver ora periciado trajava camisa cinza, bermuda {{\sl tactel}} na cor predominante preta, e calçava um par de sandálias de cores preta e vermelha ({figVit.frase[1]})."""
+O cadáver ora periciado trajava camisa cinza, bermuda {{\\sl tactel}} na cor predominante preta, e calçava um par de sandálias de cores preta e vermelha ({figVit.frase[1]})."""
 
 if figPert.numFigs > 0:
 
@@ -932,7 +937,7 @@ Mediante Análise Perinecroscópica detalhada, foram constatadas lesões perfuro
 
 Tais lesões, bem como possivelmente outras que não foram encontradas quando da perícia no local, deverão ser adequadamente descritas e fotografadas quando da Perícia Tanatoscópica, a ser realizada por médicos legistas do Instituto de Medicina Legal Antônio Persivo Cunha - IML.
 
-%É importante ressaltar que foi encontrada uma lesão típica de defesa no antebraço direito (ver figura \ref{{antebraco}}).
+%É importante ressaltar que foi encontrada uma lesão típica de defesa no antebraço direito (ver figura \\ref{{antebraco}}).
 
 {figBalVit.frase}
 
@@ -955,6 +960,7 @@ cujo cadáver foi encontrado no dia \textbf{""" + dataCienteRes + r"""}, no loca
 (\MakeLowercase{\arma} ou similares) e que, pelas circunstâncias, caracteriza-se uma \textbf{AÇÃO HOMICIDA}."""
 
 enc = r"""
+%\newpage
 \section{ENCERRAMENTO}
 
 \setcounterpageref{pgf}{pagfim}
