@@ -1,0 +1,2 @@
+1) Quando o padrão na numeração das figuras não bate (Ex.: [ext, ext2, ext3], ou [ext1, ext3, ext4]), o programa pede pra corrigir no runtime. Só que ele entra em um loop infinito, mesmo com o erro corrigido.
+2) Em alguns casos (Ex.: duplo homicídio), por algum motivo, a operação "merge" falha.

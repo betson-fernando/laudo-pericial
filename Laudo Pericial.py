@@ -740,7 +740,7 @@ for local in locais:
 
     if local.tipo.lower() in ['interno', 'misto']:
         
-        if figTer.numFigs + figIint.numFigs > 0: # Caso houver terreno ou interior de residência fotografados:
+        if figTer.numFigs + figInt.numFigs > 0: # Caso houver terreno ou interior de residência fotografados:
             descLocalDetalhe += figExt.frase[1] + "\n\n"
         
         # Descrição do terreno
