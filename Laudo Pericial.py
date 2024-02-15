@@ -25,21 +25,27 @@ import settings
 
 # Definição de funções: #######################################
 
-def open_sheet(path: str, sheetname: str or int, hd_index: int, col_names: {str: str}) -> pd.DataFrame:
+def open_sheet(path: str, sheetname: str or int, hd_index: int, col_names: {str: str}, mappings={}) -> pd.DataFrame:
     """Esta função abre uma tabela presente fisicamente no computador.
      Entradas:
          path: endereço até a tabela;
          sheetname: nome da planilha. <str> ou <int>, sendo este último >=0;
          hd_index: índice da linha de cabeçalho da planilha. <int> >= 0;
          col_names: nomes das colunas a serem importadas. dict(<str>);
+         mappings {str, obj}, default {}: dicionário relacionando colunas a funções a serem aplicadas a estas colunas.
      Saídas:
          sheet: arquivo .xlsx."""
 
-    inv_col_names = {v: k for k, v in col_names.items()}
+    inv_col_names = {v: k for k, v in col_names.items()} # Criando um dicionário invertendo chaves e valores, para, no retorno da função, renomear os nomes das colunas para o padrão do programa.
     try:
         with open(path, "rb") as f_inner:
             # file_io_obj = io.BytesIO(f.read())
-            sheet = pd.read_excel(f_inner, sheet_name=sheetname, header=hd_index, usecols=col_names.values(), engine='openpyxl')
+            sheet = pd.read_excel(f_inner, sheet_name=sheetname, header=hd_index, usecols=col_names.values(), engine='openpyxl').rename(columns=inv_col_names)
+
+            for col, func in mappings.items():
+                sheet[col] = sheet[col].apply(func)
+
+            
     except KeyError as e1:
         if 'Worksheet' in str(e1):
             print(f"\nUma aba cujo nome foi informado na planilha de parâmetros não foi encontrada no arquivo \"{Path(path).name}\".\nDescrição do erro: '{str(e1)}'")
@@ -59,7 +65,8 @@ def open_sheet(path: str, sheetname: str or int, hd_index: int, col_names: {str:
         sheet = None
         shutil.rmtree(casodir_path)
         exit()
-    return sheet.rename(columns=inv_col_names)
+    
+    return sheet
 
 
 def download_sheet(url: str, dest: str, stopiferror: bool = False):
@@ -402,7 +409,7 @@ col_veic = {k: col_veic[k] for k in col_veic if k == k and col_veic[k] == col_ve
 col_bal = {k: col_bal[k] for k in col_bal if k == k and col_bal[k] == col_bal[k]}
 
 
-# INFORMAÇÕES DA BASE ------------------------------------------------------------------------------------------------------------------------
+# INFORMAÇÕES GERAIS PREENCHIDAS NA BASE ------------------------------------------------------------------------------------------------------------------------
 sheet_base = open_sheet(tab_base_path, str(aba_base), header_index_base, col_base)
 sheet_base.set_index("caso", inplace=True)
 
@@ -483,8 +490,9 @@ string_info = nomePmRes + matPmRes + batPMRes
 # INSERIR AS VÍTIMAS -------------------------------------------------------------------------------------------------------------------
 string_vit = ""
 if open_vit:
-    sheet_vit_base = open_sheet(tab_base_path, str(aba_vit_base), header_index_vit_base, col_vit_base)
-    sheet_vit_loc = open_sheet(tab_form_path, aba_vit_loc, header_index_form, col_vit_loc)
+    sheet_vit_base = open_sheet(tab_base_path, str(aba_vit_base), header_index_vit_base, col_vit_base, mappings={'nic': str})
+    sheet_vit_loc = open_sheet(tab_form_path, aba_vit_loc, header_index_form, col_vit_loc, mappings={'nic': str})
+
 
     sheet_vit_base.set_index("ocorrencia_id", inplace=True)
     sheet_vit_loc.set_index("caso", inplace=True)
@@ -496,13 +504,13 @@ if open_vit:
         # Se não houver vítima cadastrada, baixe a planilha e atualiza a parte de vítimas.
         download_sheet(tab_base_url, tab_base_path, True)
 
-        sheet_vit_base = open_sheet(tab_base_path, str(aba_vit_base), header_index_vit_base, col_vit_base)
+        sheet_vit_base = open_sheet(tab_base_path, str(aba_vit_base), header_index_vit_base, col_vit_base, dtype={'nic': int})
         sheet_vit_base.set_index("ocorrencia_id", inplace=True)
         row_vit_base = return_tgt_row(sheet_vit_base, row_base["caso_id"], "Vítima não encontrada na planilha preenchida na BASE. Provavelmente não foi cadastrada.", True)
 
     if row_vit_loc.empty:
         download_sheet(tab_form_url, tab_form_path, True)
-        sheet_vit_loc = open_sheet(tab_form_path, aba_vit_loc, header_index_form, col_vit_loc)
+        sheet_vit_loc = open_sheet(tab_form_path, aba_vit_loc, header_index_form, col_vit_loc, dtype={'nic': int})
         sheet_vit_loc.set_index("caso", inplace=True)
         row_vit_loc = return_tgt_row(sheet_vit_loc, std_casoTgt, "Caso não encontrado no FORMULÁRIO DE VÍTIMAS.", True)
 
@@ -511,6 +519,7 @@ if open_vit:
     row_vit_base = row_vit_base.applymap(lambda x: str(int(x)) if ((type(x) == str and str(x).isnumeric()) or type(x) == float) else x)
 
     try:
+        
         row_vit = row_vit_base.merge(row_vit_loc, sort=True, validate="1:1")
         assert row_vit.__len__() == row_vit_base.__len__() == row_vit_loc.__len__()
     except AssertionError:
@@ -520,14 +529,18 @@ if open_vit:
               f"O programa será encerrado. Corrija e re-execute.")
         row_vit = pd.DataFrame([])
         exit()
-    except pd.errors.MergeError:  # Quando as colunas do nic não têm o mesmo nome entre as planilhas.
-        print(f"Aparentemente, o nome da coluna 'nic' não coincide na tabela da vítima preenchida na base e a tabela do formulário da vítima. Observe:\n"
-              f"Colunas da tabela de vítimas preenchida na base:\n"
-              f"{row_vit_base.columns}\n"
-              f"Colunas da tabela do formulário da vítima:\n"
-              f"{row_vit_loc.columns}\n"
-              f"O programa será encerrado. Corrija a planilha de formulário da vítima e re-execute.")
-        row_vit = pd.DataFrame([])
+    except pd.errors.MergeError as e1:  # Quando as colunas do nic não têm o mesmo nome entre as planilhas.
+        
+        if 'one-to-one' in str(e1):
+            print("Aparentemente, existem duas entradas de NICs ou na tabela dos forms, ou na tabela preenchida na base. Corrija e re-execute.")
+
+        else:
+            print(f"Aparentemente, o nome da coluna 'nic' não coincide na tabela da vítima preenchida na base e a tabela do formulário da vítima. Observe:\n"
+                  f"Colunas da tabela de vítimas preenchida na base:\n"
+                  f"{row_vit_base.columns}\n"
+                  f"Colunas da tabela do formulário da vítima:\n"
+                  f"{row_vit_loc.columns}\n"
+                  f"O programa será encerrado. Corrija a planilha de formulário da vítima e re-execute.")
         exit()
 
 
@@ -619,13 +632,13 @@ info += "\\end{comment}"
 
 # ============================= DECLARAÇÃO DAS FIGURAS =====================================
 
-figExt = Figuras(images_path, "ext", ["|A| |figura| <ref> |mostra| as condições do ambiente mediato no momento dos exames periciais:", "O ambiente imediato se deu no interior de um lote, já exibido externamente |na| |figura| <ref>"], "Fotografia mostrando o local da ocorrência.")
+figExt = Figuras(images_path, "ext", ["|A| |figura| <ref> |mostra| as condições do ambiente mediato no momento dos exames periciais:", "O ambiente imediato se deu no interior de um lote, já exibido externamente |na| |figura| <ref>."], "Fotografia mostrando o local da ocorrência.")
 
-figTer = Figuras(images_path, "ter", "Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela flexível e translúcida. A área compreendia as porções anterior e laterais da residência, conforme |figura| <ref>:", "Fotografia de terreno pertencente ao lote em tela.")
+figTer = Figuras(images_path, "ter", "Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela flexível e translúcida, com base em barro batido, conforme |figura| <ref>:", "Fotografia de terreno pertencente ao lote em tela.")
         
-figInt = Figuras(images_path, "int", ["A residência, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme |figura| <ref>:", "O local imediato (onde se encontrava o cadáver) era o XXXXX, conforme pode ser observado |na| |figura| {figInt.ref}"], "Fotografia do interior da residência.")
+figInt = Figuras(images_path, "int", ["A residência, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme |figura| <ref>:", "O local imediato (onde se encontrava o cadáver) era o XXXXX, conforme pode ser observado |na| |figura| <ref>."], "Fotografia do interior da residência.")
 
-figLencol = Figuras(images_path, "lencol", ["Em decorrência disto, foram verificados sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e lesões.", "se encontrava coberto por um cobertor (|figura| <ref>). Após descoberto, tal cadáver"], "Fotografia, obtida quando da chegada da Equipe Técnica, do cadáver coberta.")
+figLencol = Figuras(images_path, "lencol", ["Em decorrência disto, foram verificados sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e lesões.", "se encontrava envolto por um cobertor (|figura| <ref>). Após exposto, tal cadáver"], "Fotografia, obtida quando da chegada da Equipe Técnica, do cadáver coberta.")
 
 figBolso = Figuras(images_path, "bolso", ["Também foram encontradas evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>.", "Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela."], "Fotografia do bolso do cadáver.")
 
@@ -639,13 +652,15 @@ figVitMov = Figuras(images_path, "vitmov", "Também |foi| |realizada| |fotografi
 
 figTat = Figuras(images_path, "tat", "Na sua epiderme |foi| |constatada| |tatuagem|, |fotografada| e |exibida| |na| |figura| <ref>:", "Fotografia de tatuagem no cadáver.")
 
+figId = Figuras(images_path, "id", "|Figura| <ref>", "Fotografia de documento de identificação do cadáver.")
+
 figPert = Figuras(images_path, "pert", "|Foi| |feito| |registro| |fotográfico| destes itens, que estão exibidos |na| |figura| <ref>:", "Fotografia de objeto(s) encontrado(s) com o cadáver.")
 
 figLes = Figuras(images_path, "les", "|A| |figura| <ref> |exibe| as lesões acima relatadas\n%,e as numerações nas imagens correspondem àquelas que identificam as lesões na lista acima\n:", "Lesões constatadas no cadáver.")
 
 figEsq = Figuras(images_path, "esq", r"|A| |figura| <ref> |exibe|, através de |esquema|, as lesões encontradas no cadáver. Em |tal| |esquema|, as lesões representadas por um círculo são características de entrada de projétil, enquanto as representadas por um ``X'', saída de projétil, e, por fim, as indicadas por um quadrado não puderam ter suas características identificadas no momento do Exame Pericial.", "Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. \textbf{Medicina Legal Prática Compreensível}. Barra do Garças: Ed. do Autor, 2010.")
 
-figBalVit = Figuras(images_path, "balvit", "Por fim, foi encontrado um projétil sob cadáver, conforme |figura| <ref>:", "Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver.")
+figBalVit = Figuras(images_path, "balvit", "Por fim, foi(foram) encontrado(s) elemento(s) balístico(s) sob cadáver, conforme |figura| <ref>:", "Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver.")
 
 
 hist = f"""
@@ -744,7 +759,7 @@ for local in locais:
             descLocalDetalhe += figExt.frase[1] + "\n\n"
         
         # Descrição do terreno
-        descLocalDetalhe += figTer.frase + "\n\n" + figExt.figsTex + "\n\n"
+        descLocalDetalhe += figTer.frase + "\n\n" + figTer.figsTex + "\n\n"
         
         descLocalDetalhe += figInt.frase[0] + "\n\n" + figInt.figsTex + "\n\n" + figInt.frase[1] + "\n\n"
 
@@ -835,7 +850,7 @@ exames += r"""
 exames += f"""
 \\subsection{{DO CADÁVER}}
 
-Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um cadáver, que {figLencol.frase[1]} foi registrado em ângulos diferentes para permitir uma completa visualização da posição e condições iniciais em que foi encontrado. {figVit.frase[0]}
+Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um cadáver, que {figLencol.frase[1]} foi registrado em diferentes direções para permitir uma completa visualização da posição e condições iniciais em que foi encontrado. {figVit.frase[0]}
 
 {figVit.figsTex}
 
@@ -858,17 +873,18 @@ de idade (figura \\ref{{rosto}}).
 {figTat.figsTex}
 
 """
-exames += r"""
+exames += f"""
 %No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise, motivo pelo qual sua identidade foi declarada como sendo desconhecida. 
-%No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise. Contudo, a informação de familiares, aliada a pesquisa no sistema "Polícia Ágil", da Secretaria de Defesa Social de Pernambuco, revelou se tratar de \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
-No momento dos exames periciais, foi encontrada uma Carteira de Identidade pertencente ao indivíduo cujo cadáver estava sob análise, constatando que seu nome era \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figuras \ref{ida} e \ref{idv}).
-%No momento dos exames periciais, foi apresentada a Carteira Nacional de Habilitação (CNH) do indivíduo cujo cadáver estava sob análise, constatando que seu nome era \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figura \ref{ida}).
-%No momento dos exames periciais, foi apresentada a Carteira de Trabalho e Previdência Social do indivíduo cujo cadáver estava sob análise, de número \CTPSnum{ }e série \CTPSser, a partir da qual foi constatado que seu nome era \textbf{\nome}, filho(a) de \filiacao. Seu número do R.G. era \rg, com nascimento em \datanasc, possuindo, portanto, \idade{ }(figuras \ref{ida} e \ref{idv}).
+%No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise. Contudo, a informação de familiares, aliada a pesquisa no sistema "Polícia Ágil", da Secretaria de Defesa Social de Pernambuco, revelou se tratar de \\textbf{{\\nome}}, filho(a) de \\filiacao. Seu número do R.G. era \\rg, com nascimento em \\datanasc, possuindo, portanto, \\idade{{ }}({figId.frase}).
+No momento dos exames periciais, foi encontrada uma Carteira de Identidade pertencente ao indivíduo cujo cadáver estava sob análise, constatando que seu nome era \\textbf{{\\nome}}, filho(a) de \\filiacao. Seu número do R.G. era \\rg, com nascimento em \\datanasc, possuindo, portanto, \\idade{{ }}({figId.frase}).
+%No momento dos exames periciais, foi apresentada a Carteira Nacional de Habilitação (CNH) do indivíduo cujo cadáver estava sob análise, constatando que seu nome era \\textbf{{\\nome}}, filho(a) de \\filiacao. Seu número do R.G. era \\rg, com nascimento em \\datanasc, possuindo, portanto, \\idade{{ }}({figId.frase}).
+%No momento dos exames periciais, foi apresentada a Carteira de Trabalho e Previdência Social do indivíduo cujo cadáver estava sob análise, de número \\CTPSnum{{ }}e série \\CTPSser, a partir da qual foi constatado que seu nome era \\textbf{{\\nome}}, filho(a) de \\filiacao. Seu número do R.G. era \\rg, com nascimento em \\datanasc, possuindo, portanto, \\idade{{ }}({figId.frase}).
 
+{figId.figsTex}
+"""
+exames += r"""
 Foi atribuído ao cadáver o Número de Identificação Cadavérica (NIC) \nic, colocada a Pulseira de Identificação Cadavérica (PIC) (figura \ref{pic}), e preenchido o Boletim de Identificação Cadavérica (BIC) (figura \ref{bic}).
 
-%\f{ida}{Fotografia do anverso do documento de identificação encontrado com o cadáver.}
-%\f{idv}{Fotografia do verso do documento de identificação encontrado com o cadáver.}
 \f{pic}{Fotografia da PIC colocada no cadáver.}
 \f{bic}{Fotografia do BIC preenchido e encaminhado ao Instituto de Medicina Legal (IML).}
 """
@@ -893,39 +909,41 @@ exames += f"""
 {figPert.frase}
 
 {figPert.figsTex}
+"""
 
-\subsubsection{{POSIÇÃO}}
+exames += f"""
+\\subsubsection{{POSIÇÃO}}
  
 Quando da chegada da Equipe Técnica, o cadáver estava em decúbito ventral, com os membros flexionados, à exceção do inferior esquerdo, que se encontrava estendido ({figVit.frase[1]}).
 
-\subsubsection{{PERINECROSCOPIA}}
+\\subsubsection{{PERINECROSCOPIA}}
 
 %TODO : Descrever rigidez, manchas hipostáticas, etc
 
 Mediante Análise Perinecroscópica detalhada, foram constatadas lesões perfurocontusas provocadas por projéteis disparados por arma de fogo, a saber:
 
-\begin{{enumerate}}
-	\item Lesão característica de saída de projétil na região epigástrica;
-	\item Lesão característica de saída de projétil na região epigástrica;
-	\item Lesão característica de entrada de projétil no flanco esquerdo;
-	\item Lesão característica de saída de projétil na região torácica direita;
-	\item Lesão característica de saída de projétil na região infraclavicular direita;
-	\item Lesão característica de entrada de projétil no terço superior do braço direito;
-	\item Lesão característica de entrada de projétil na região auricular direita;
-	\item Lesão provocada por projétil disparado por arma de fogo no lado direito da região frontal;
-	\item Lesão provocada por projétil disparado por arma de fogo na região nasal;
-	\item Lesão provocada por projétil disparado por arma de fogo na região ilíaca direita;
-	\item Lesão característica de entrada de projétil na região lombar esquerda;
-	\item Lesão característica de entrada de projétil na região lombar direita;
-	\item Lesão característica de entrada de projétil na região dorsal direita;
-	\item Lesão característica de entrada de projétil na região escapular direita;
-	\item Lesão característica de entrada de projétil na porção posterior do antebraço direito;
-	\item Lesão característica de saída de projétil na porção anterior do antebraço direito;
-	\item Lesão característica de entrada de projétil na região supraescapular direita;
-	\item Lesão característica de entrada de projétil na região cervical;
-	\item Lesão característica de entrada de projétil na região occipital;
-	\item Lesão característica de entrada de projétil na região auricular esquerda.
-\end{{enumerate}}
+\\begin{{enumerate}}
+	\\item Lesão característica de saída de projétil na região epigástrica;
+	\\item Lesão característica de saída de projétil na região epigástrica;
+	\\item Lesão característica de entrada de projétil no flanco esquerdo;
+	\\item Lesão característica de saída de projétil na região torácica direita;
+	\\item Lesão característica de saída de projétil na região infraclavicular direita;
+	\\item Lesão característica de entrada de projétil no terço superior do braço direito;
+	\\item Lesão característica de entrada de projétil na região auricular direita;
+	\\item Lesão provocada por projétil disparado por arma de fogo no lado direito da região frontal;
+	\\item Lesão provocada por projétil disparado por arma de fogo na região nasal;
+	\\item Lesão provocada por projétil disparado por arma de fogo na região ilíaca direita;
+	\\item Lesão característica de entrada de projétil na região lombar esquerda;
+	\\item Lesão característica de entrada de projétil na região lombar direita;
+	\\item Lesão característica de entrada de projétil na região dorsal direita;
+	\\item Lesão característica de entrada de projétil na região escapular direita;
+	\\item Lesão característica de entrada de projétil na porção posterior do antebraço direito;
+	\\item Lesão característica de saída de projétil na porção anterior do antebraço direito;
+	\\item Lesão característica de entrada de projétil na região supraescapular direita;
+	\\item Lesão característica de entrada de projétil na região cervical;
+	\\item Lesão característica de entrada de projétil na região occipital;
+	\\item Lesão característica de entrada de projétil na região auricular esquerda.
+\\end{{enumerate}}
 
 {figLes.frase}
 

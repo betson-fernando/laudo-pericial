@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import re
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
 from globalfuncs.funcs import plural
@@ -36,17 +37,24 @@ class Figuras:
         self.figsTex = ""
 
         # Procurar figuras
-        
+        std = re.compile(r"\d*" + self.label + r"\d*")  # Definição do padrão dos nomes de figuras (sem extensão).
+
         while True:
             try:
                 # Arquivos que têm self.label em seus nomes e com extensão '.jpg', ou '.JPG'
-                self.selectedFigs =[item.stem for item in Path(self.figDir).iterdir() if (self.label in item.stem and item.suffix.lower() == '.jpg')]
+                self.selectedFigs =[item.stem for item in Path(self.figDir).iterdir() if (re.fullmatch(std, item.stem) is not None and item.suffix.lower() == '.jpg')]
                 self.numFigs = len(self.selectedFigs)
 
+
+                if self.selectedFigs != [] and self.selectedFigs[0][0].isdecimal():
+                    # AJEITAR ESTA GAMBIARRA! ELA PULA A VERIFICAÇÃO DE CONSISTÊNCIA NOS NÚMEROS DAS FIGURAS NO CASO DE DUPLO HOMICÍDIO, SIMPLESMENTE PORQUE NÃO IMPLEMENTEI AINDA.
+                    break
+                    
                 # Assegurar que a lista de figuras vai de 1,2,3,...,numFigs
                 if self.numFigs > 1: # Essa verificação não será executada se houver apenas uma figura, para dispensar a numeração. Ex.: "bolso.jpg"
                     condList = [(f'{self.label}{num}' in self.selectedFigs) for num in range(1, self.numFigs + 1)]  # Lista de booleanos B[i]. B[i] = True se figura[i] está na lista de figuras.
                     assert sum(condList) == self.numFigs # Assegurar que cada elemento da lista acima é verdadeiro, ou seja, toda figura[i] está na lista de figuras
+            
             except AssertionError:
                 print(f"Número de figuras: {self.numFigs}")
                 print(f"Caminho: {self.figDir}")
