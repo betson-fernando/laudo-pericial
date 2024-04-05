@@ -1,5 +1,3 @@
-
-
 def testNumber(name, value):
     """Esta função tem o objetivo de forçar o usuário a digitar um valor que seja uma string de número válido.
        Entradas:
@@ -78,3 +76,30 @@ def plural(frase: str):
             print(f"Palavra '{match.lower()}' não existe no dicionário de flexão de número. Pulando este match.")
 
     return frase
+
+
+def findDotEnv(filePath):
+    """Esta função recebe um caminho para um diretório e itera dentro de todas as pastas pai até encontrar o primeiro arquivo '.env'.
+       Retorna o caminho para o arquivo .env, ou erro caso não houver nenhum."""
+    
+    
+    from pathlib import Path  
+    
+    if type(filePath) == str:
+        filePath = Path(filePath)
+        
+    if not filePath.is_dir():
+        raise FileNotFoundError("O argumento da função não é um diretório válido.")
+    
+    for item in filePath.iterdir():  # Loop que analisa se há um arquivo .env na pasta FilePath
+            if item.is_file() and item.suffix == '.env':
+                return item
+    
+    # Se não encontrar na pasta FilePath, itere pelos pais até encontrar o arquivo .env ou gere um erro.
+    parents = filePath.parents
+    for cont in range(0, len(parents)):  #Loop que adiciona anda um passo em direção a target.
+        for item in filePath.parents[cont].iterdir():  # Loop que analisa se há um arquivo .env na pasta FilePath.parents[cont]
+            if item.is_file() and item.suffix == '.env':
+                return(item)
+
+    raise FileNotFoundError("Arquivo .env não encontrado.")

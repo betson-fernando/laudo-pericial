@@ -1,15 +1,18 @@
 import sys
-from os import path  # gradativamente trocar os por pathlib
+from os import path, environ  # gradativamente trocar os por pathlib
+from dotenv import load_dotenv
 from pathlib import Path
 import requests
 import numpy as np
 import re
 from textwrap import dedent
-from globalfuncs.funcs import testNumber, testEmpty
+from globalfuncs.funcs import testNumber, testEmpty, findDotEnv
 
-sys.path.insert(0, str(Path(__file__).parents[1]))
-import settings
 
+#sys.path.insert(0, str(Path(__file__).parents[1]))
+
+dotenv_path = findDotEnv(Path(__file__).parent)
+load_dotenv(dotenv_path)
 
 class Local():
     """Esta classe tem como instância uma localidade:
@@ -75,16 +78,16 @@ class Local():
            "maptype": "hybrid",
            "style": "feature:poi|visibility:off",
            "markers": [f"color:red|label:{place.locId}|size:mid|{place.coord[0]},{place.coord[1]}" for place in places],
-           "key": settings.MAPS_API_KEY
+           "key": environ.get("MAPS_API_KEY")
        }
         
 
         if zoom is not np.NaN:
             payload["zoom"] = zoom
-            return requests.get(settings.MAPS_URL, params=payload).content
+            return requests.get(environ.get("MAPS_URL"), params=payload).content
                 
         elif zoom is np.NaN and addPlaces != []:
-            return requests.get(settings.MAPS_URL, params=payload).content
+            return requests.get(environ.get("MAPS_URL"), params=payload).content
             
         else:
             sys.exit("Para obter mapa com apenas um marcador, o zoom deve ser informado.\nO programa será fechado.")

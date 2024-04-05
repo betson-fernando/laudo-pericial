@@ -1,5 +1,3 @@
-import numpy as np
-
 def testNumber(name, value):
     """Esta função tem o objetivo de forçar o usuário a digitar um valor que seja uma string de número válido.
        Entradas:
@@ -10,9 +8,10 @@ def testNumber(name, value):
     
     while True:
         try:
-            temp = float(value)
+            float(value)
         except ValueError:
-            value = input(f"O valor {name} deveria ser uma string numérica, com separador decimal de ponto ('.').\nDigite corretamente: ")
+            value = input(f"O valor {name} deveria ser uma string numérica, com separador decimal de ponto ('.').\n"
+                          f"Digite corretamente: ")
         else:
             return value
 
@@ -24,24 +23,35 @@ def testEmpty(name, value):
             --> value(str): o valor a ser testado.
        Retorno (str): o valor, na forma de string não vazia.
     """
-    
+    import numpy as np
+
     while value == "" or value is np.NaN:
         value = input(f"O campo '{name}' não foi preenchido. Digite-o: ")
     
     return value
 
-def textbf(string):
-    """Esta função coloca um texto em negrito no Latex."""
-    return r"\textbf{" + str(string) + "}"
+def findDotEnv(filePath):
+    """Esta função recebe um caminho para um diretório e itera dentro de todas as pastas pai até encontrar o primeiro arquivo '.env'.
+       Retorna o caminho para o arquivo .env, ou erro caso não houver nenhum."""
     
-def ref(string):
-    """Esta função insere uma referência no Latex."""
-    return r"\ref{" + str(string) + "}"
     
-def fig(fileName, caption):
-    """Esta função insere uma figura (conforme macro definida especificamente para meu latex.
-    Entradas:
-        --> fileName(str): Nome do arquivo, sem extensão (subtende-se '.jpg', e o arquivo deve ter este formato);
-        --> caption(str): Legenda.
-    """
-    return r"\f{" + str(fileName) + "}{" + str(caption) + "}"
+    from pathlib import Path  
+    
+    if type(filePath) == str:
+        filePath = Path(filePath)
+        
+    if not filePath.is_dir():
+        raise FileNotFoundError("O argumento da função não é um diretório válido.")
+    
+    for item in filePath.iterdir():  # Loop que analisa se há um arquivo .env na pasta FilePath
+            if item.is_file() and item.suffix == '.env':
+                return item
+    
+    # Se não encontrar na pasta FilePath, itere pelos pais até encontrar o arquivo .env ou gere um erro.
+    parents = filePath.parents
+    for cont in range(0, len(parents)):  #Loop que adiciona anda um passo em direção a target.
+        for item in filePath.parents[cont].iterdir():  # Loop que analisa se há um arquivo .env na pasta FilePath.parents[cont]
+            if item.is_file() and item.suffix == '.env':
+                return(item)
+
+    raise FileNotFoundError("Arquivo .env não encontrado.")

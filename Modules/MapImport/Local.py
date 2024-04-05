@@ -1,13 +1,16 @@
 import sys
-from os import path
+from os import path, environ  # gradativamente trocar os por pathlib
+from dotenv import load_dotenv
+from pathlib import Path
 import requests
 import numpy as np
 import re
 from textwrap import dedent
-from globalfuncs.funcs import testNumber, testEmpty
+from globalfuncs.funcs import testNumber, testEmpty, findDotEnv
 
-import configs
 
+dotenv_path = findDotEnv(Path(__file__).parent)
+load_dotenv(dotenv_path)
 
 class Local():
     """Esta classe tem como instância uma localidade:
@@ -36,21 +39,24 @@ class Local():
             self.locId = locId
             self.idList.append(locId)
         
+        
         try:
+            # Esse try é apenas para garantir que os parâmetros da classe instaciada estão no formato correto. Não previne erros de usuários.
             assert isinstance(coord, tuple) and len(coord) == 2
             for item in coord:
                 assert isinstance(item, str)
         except (ValueError, AssertionError):
             sys.exit("As coordenadas não foram digitadas da forma correta.\nO argumento deve ser uma tupla de duas strings de números float, com separador decimal de ponto (\".\").\nO programa será encerrado.")
         else:
+            # Testes de erro de entrada do usuário.
             lat = testNumber("latitude", coord[0])
             lon = testNumber("longitude", coord[1])
             self.coord = (lat, lon)
                 
         self.municipio = testEmpty("municipio", municipio)
         self.bairro = testEmpty("bairro", bairro)
-        self.rua = testEmpty("rua", rua)  
-        self.tipo = testEmpty("tipo de local (interno, externo, ou misto)", tipo)
+        self.rua = rua  
+        self.tipo = tipo
         
         
     def getMaps(self, addPlaces=[], zoom:int=np.NaN):
@@ -70,19 +76,20 @@ class Local():
            "maptype": "hybrid",
            "style": "feature:poi|visibility:off",
            "markers": [f"color:red|label:{place.locId}|size:mid|{place.coord[0]},{place.coord[1]}" for place in places],
-           "key": configs.mapimport['APIKEY']
+           "key": environ.get("MAPS_API_KEY")
        }
         
+
         if zoom is not np.NaN:
             payload["zoom"] = zoom
-            return requests.get(configs.mapimport['URL'], params=payload).content
+            return requests.get(environ.get("MAPS_URL"), params=payload).content
                 
         elif zoom is np.NaN and addPlaces != []:
-            return requests.get(configs.mapimport['URL'], params=payload).content
+            return requests.get(environ.get("MAPS_URL"), params=payload).content
             
         else:
             sys.exit("Para obter mapa com apenas um marcador, o zoom deve ser informado.\nO programa será fechado.")
-
+            
     def info(self):
         """Retorna informações do local.
         Este método não tem entradas, e o retorno é uma string.."""
@@ -93,15 +100,4 @@ class Local():
                 Coordenadas: lat={lat}, long={long}
                 Tipo de local: {self.tipo}.
                 """)
-    
-    
-    #def toTex(self):
-    #    """Retorna uma string pronta para aplicação no arquivo tex"""
-        
-        #t = Template(r"\newcommand{$key}{$value}" +"\n")
-        #return t.substitute(key=r"\rua", value=self.rua) + \
-        #       t.substitute(key=r"\bairro", value=self.bairro) + \
-        #       t.substitute(key=r"\municipio", value=self.municipio) + \
-        #       t.substitute(key=r"\coord", value=f"{self.coord[0]}, {self.coord[1]}")
-               
-
+                

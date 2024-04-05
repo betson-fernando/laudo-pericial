@@ -26,6 +26,10 @@ import settings
 # Definição de funções: #######################################
 
 def open_sheet(path: str, sheetname: str or int, hd_index: int, col_names: {str: str}, mappings={}) -> pd.DataFrame:
+
+    # TODO: tentar usar xlrd --> workbook pra evitar o uso do dataframe
+    
+    
     """Esta função abre uma tabela presente fisicamente no computador.
      Entradas:
          path: endereço até a tabela;
@@ -228,6 +232,8 @@ def createdirs(casoDirName: str, origPath: str, destPath: str, delete_origPath: 
 
 # Quando as classes forem implementadas, apagar função abaixo
 def return_tgt_row(sheet: pd.DataFrame, index_str: str, message: str, exit_if_not_found: bool = False):
+
+
     """Esta função tem o objetivo de retornar a linha completa de um caso presente em uma planilha no formato DataFrame,
     além de substituir valores vazios ("NaN") por strings vazias.
     Caso a linha não for encontrada, retorna um DataFrame de linha única no qual todos os valores são strings vazias,
@@ -351,11 +357,7 @@ open_bal = False  # Se há elementos balísticos
 casoTgt = caso_num + "." + caso_tipo + "/" + caso_ano
 
 std_casoTgt = casoTgt
-# std_casoTgt = f"{'0' * (4 - len(casoTgt.split('.')[0]))}{casoTgt}"
-
-# TODO: A função entrar_caso aparentemente retorna o número no formato padrão. Testar se std_casoTgt = casoTgt. Caso sim, excluir substituir std_casoTgt por casoTgt.
-# A expressão acima é apenas para colocar tantos zeros quantos necessários para que o número do caso tenha 4 dígitos.
-# Ex: 49.10/2021 --> 0049.10/2021
+# TODO: TROCAR std_casoTgt por casoTgt
 
 
 with open(Path(SCRIPT_PATH).joinpath("Parametros.xlsx"), "rb") as f:
@@ -739,7 +741,7 @@ for local in locais:
         f"""
         Especificamente, no que concerne ao local mediato, a via pela qual se deu acesso à ocorrência permitia tráfego nos dois sentidos, possuía calçadas transitáveis por pedestres, com iluminação pública adequada e, em suas margens, havia casas de padrões similares às descritas acima.
         
-        O ambiente imediato se deu no endereço {textbf(f"{local.rua}, {local.bairro}, {local.municipio} - PE")}. Mais especificamente, esta localidade pode ser representada pelas coordenadas geográficas cartesianas {textbf(f'{lat},{lon}')}. Esta localização também se encontra representada através das figuras {ref(mapName)} e {ref(mapZoomName)}, que mostram fotografias do local da ocorrência obtidas por meios aeroespaciais (fonte: {{\\sl Google Earth}}).
+        O ambiente imediato se deu no endereço {textbf(f"{local.rua}, {local.bairro}, {local.municipio} - PE")}. Mais especificamente, esta localidade pode ser representada pelas coordenadas geográficas cartesianas {textbf(f'{lat},{lon}')}, indicadas nas figuras {ref(mapName)} e {ref(mapZoomName)}, que mostram fotografias do local da ocorrência obtidas por meios aeroespaciais (fonte: {{\\sl Google Earth}}).
 
         {fig(f'{mapName}', 'Mapa em escala reduzida no qual o marcador vermelho indica o local da ocorrência.')}
         {fig(f'{mapZoomName}', 'Mapa em escala ampliada no qual o marcador vermelho indica o local da ocorrência.')}
@@ -971,11 +973,17 @@ Fundamentado nos exames realizados e em tudo quanto foi exposto no corpo deste l
 \textbf{\nome}, 
 %de \textbf{IDENTIDADE DESCONHECIDA}, 
 %
-cujo cadáver foi encontrado no dia \textbf{""" + dataCienteRes + r"""}, no local já mencionado, teve morte violenta em decorrência de lesões produzidas por instrumento(s) 
-%
-\tipoinst{ }
-%
-(\MakeLowercase{\arma} ou similares) e que, pelas circunstâncias, caracteriza-se uma \textbf{AÇÃO HOMICIDA}."""
+cujo cadáver foi encontrado no dia \textbf{""" + dataCienteRes + r"""}, no local já mencionado, """
+
+if "esclarecer" in tipoExameRes.lower():
+    conc += r"""foi encontrado em estado de óbito, mas sem lesões aparentes nem circunstâncias que indicassem, naquele momento, um crime intencional. 
+    Portanto, as circunstâncias da morte restam \textbf{A ESCLARECER}."""
+else:
+    conc += r"""teve morte violenta em decorrência de lesões produzidas por instrumento(s) 
+    %
+    \tipoinst{ }
+    %
+    (\MakeLowercase{\arma} ou similares) e que, pelas circunstâncias, caracteriza-se uma \textbf{AÇÃO HOMICIDA}."""
 
 enc = r"""
 %\newpage

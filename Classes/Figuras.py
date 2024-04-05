@@ -42,6 +42,7 @@ class Figuras:
         while True:
             try:
                 # Arquivos que têm self.label em seus nomes e com extensão '.jpg', ou '.JPG'
+                # TODO: USAR A FUNÇÃO GLOB EM VEZ DE ITERDIR
                 self.selectedFigs =[item.stem for item in Path(self.figDir).iterdir() if (re.fullmatch(std, item.stem) is not None and item.suffix.lower() == '.jpg')]
                 self.numFigs = len(self.selectedFigs)
 
