@@ -17,10 +17,11 @@ from zipfile import BadZipFile
 SCRIPT_PATH = Path(__file__).parent
 sys.path.insert(0, str(SCRIPT_PATH))
 
-from Classes.Local import Local
+#from Classes.Local import Local
 from Classes.Figuras import Figuras
 from globalfuncs.funcs import textbf, ref, fig
 import settings
+from Modules.MapImport import Local
 
 
 # Definição de funções: #######################################
@@ -345,7 +346,6 @@ def str_replace(dictio:{str:str}, orig_string: str) -> str:
     
 
 ##############################################################
-
 
 # Parâmetros para ajustar:
 open_vit = True  # Se há vítimas
