@@ -30,28 +30,19 @@ def testEmpty(name, value):
     
     return value
 
-def findDotEnv(filePath):
-    """Esta função recebe um caminho para um diretório e itera dentro de todas as pastas pai até encontrar o primeiro arquivo '.env'.
-       Retorna o caminho para o arquivo .env, ou erro caso não houver nenhum."""
+def getEnviron(key: str):
+    """Esta função recebe uma chave de uma variável de ambiente e retorna o seu valor.
+    Resulta em erro se a chave não existir ou for vazia."""
     
+    from os import environ
     
-    from pathlib import Path  
-    
-    if type(filePath) == str:
-        filePath = Path(filePath)
-        
-    if not filePath.is_dir():
-        raise FileNotFoundError("O argumento da função não é um diretório válido.")
-    
-    for item in filePath.iterdir():  # Loop que analisa se há um arquivo .env na pasta FilePath
-            if item.is_file() and item.suffix == '.env':
-                return item
-    
-    # Se não encontrar na pasta FilePath, itere pelos pais até encontrar o arquivo .env ou gere um erro.
-    parents = filePath.parents
-    for cont in range(0, len(parents)):  #Loop que adiciona anda um passo em direção a target.
-        for item in filePath.parents[cont].iterdir():  # Loop que analisa se há um arquivo .env na pasta FilePath.parents[cont]
-            if item.is_file() and item.suffix == '.env':
-                return(item)
-
-    raise FileNotFoundError("Arquivo .env não encontrado.")
+    try:
+        value = environ[key]
+        assert value != ''
+        return value
+    except KeyError as e:
+        print(f"A chave {e} não foi encontrada no arquivo 'configs.env'. Corrija e reenvie.")
+        return None
+    except AssertionError:
+        printf(f"O valor da chave {e} está vazio no arquivo 'configs.env'. Corrija e reenvie.")
+        return None

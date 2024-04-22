@@ -61,7 +61,7 @@ def plural(frase: str):
     pat = re.compile(r"\|(\w+)\|")
     matches = re.findall(pat, frase)
 
-    with open(Path(__file__).parents[1].joinpath( "arquivos/dicPlural.json"), "r", encoding='utf-8') as d:
+    with open(Path(__file__).parents[0].joinpath( "arquivos/dicPlural.json"), "r", encoding='utf-8') as d:
         dic = json.loads(d.read())
         d.close()
 
@@ -76,3 +76,20 @@ def plural(frase: str):
             print(f"Palavra '{match.lower()}' não existe no dicionário de flexão de número. Pulando este match.")
 
     return frase
+
+def getEnviron(key: str):
+    """Esta função recebe uma chave de uma variável de ambiente e retorna o seu valor.
+    Resulta em erro se a chave não existir ou for vazia."""
+    
+    from os import environ
+    
+    try:
+        value = environ[key]
+        assert value != ''
+        return value
+    except KeyError as e:
+        print(f"A chave {e} não foi encontrada no arquivo 'configs.env'. Corrija e reenvie.")
+        return None
+    except AssertionError:
+        printf(f"O valor da chave {e} está vazio no arquivo 'configs.env'. Corrija e reenvie.")
+        return None

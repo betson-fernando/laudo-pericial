@@ -20,8 +20,8 @@ SCRIPT_PATH = Path(__file__).parent
 sys.path.insert(0, str(SCRIPT_PATH))
 
 #from Classes.Local import Local
-from Classes.Figuras import Figuras
-from globalfuncs.funcs import textbf, ref, fig
+from Classes import Figuras
+from GlobalFuncs import textbf, ref, fig, getEnviron
 from Modules.MapImport import Local
 
 
@@ -345,23 +345,6 @@ def str_replace(dictio:{str:str}, orig_string: str) -> str:
 
     return orig_string
     
-    
-def get_environ(key: str):
-    """Esta função recebe uma chave de uma variável de ambiente e retorna o seu valor.
-    Resulta em erro se a chave não existir ou for vazia."""
-    
-    try:
-        value = environ[key]
-        assert value != ''
-        return value
-    except KeyValue as e:
-        print(f"A chave {e} não foi encontrada no arquivo 'configs.env'. Corrija e reenvie.")
-        return None
-    except AssertionError:
-        printf(f"O valor da chave {e} está vazio no arquivo 'configs.env'. Corrija e reenvie.")
-        return None
-        
-        
 ##############################################################
 
 load_dotenv(find_dotenv("configs.env"))
@@ -398,8 +381,8 @@ tab_base_path = ender.iloc[5, 1]  # Caminho físico para a tabela preenchida na 
 aba_base = ender.iloc[6, 1]  # Nome da aba para a tabela preenchida na base
 aba_vit_base = ender.iloc[7, 1]  # Nome da aba da tabela de vítimas preenchida na base
 
-tab_base_url = get_environ('MAIN_SHEET_URL')  # URL para tabela preenchida na base
-tab_form_url = get_environ('FORMS_URL')  # URL para tabela dos formulários
+tab_base_url = getEnviron('MAIN_SHEET_URL')  # URL para tabela preenchida na base
+tab_form_url = getEnviron('FORMS_URL')  # URL para tabela dos formulários
 
 tab_form_path = ender.iloc[9, 1]  # Caminho físico para a tabela dos formulários
 
@@ -748,10 +731,10 @@ for local in locais:
     lon = local.coord[1]
     
     with open(Path(images_path).joinpath(mapName + '.jpg'), 'wb') as mapa, open(Path(images_path).joinpath(mapZoomName + '.jpg'), 'wb') as mapaZoom:
-        mapa.write(local.getMaps(zoom=get_environ('LOW_ZOOM')))
+        mapa.write(local.getMaps(zoom=getEnviron('LOW_ZOOM')))
         mapa.close()
         
-        mapaZoom.write(local.getMaps(zoom=get_environ('HIGH_ZOOM')))
+        mapaZoom.write(local.getMaps(zoom=getEnviron('HIGH_ZOOM')))
         mapaZoom.close()
 
     

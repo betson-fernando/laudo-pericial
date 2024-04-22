@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
-from globalfuncs.funcs import plural
+from GlobalFuncs import plural, getEnviron
 
 
 class Figuras:

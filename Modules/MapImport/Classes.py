@@ -6,7 +6,7 @@ import requests
 import numpy as np
 import re
 from textwrap import dedent
-from .GlobalFuncs import testNumber, testEmpty
+from .GlobalFuncs import testNumber, testEmpty, getEnviron
 
 
 class Local():
@@ -67,23 +67,17 @@ class Local():
 
         places = [self] + addPlaces
         
-        try:
-            apiKey = environ['MAPS_API_KEY']
-            url = environ['MAPS_URL']
-        except KeyError as e:
-            print(f'Parâmetro {e} não encontrado. Insira o valor correspondente em "configs.env".')
-        
-        
         payload = {"size": "640x427",
            "scale": "2",
            "format": "jpeg",
            "maptype": "hybrid",
            "style": "feature:poi|visibility:off",
            "markers": [f"color:red|label:{place.locId}|size:mid|{place.coord[0]},{place.coord[1]}" for place in places],
-           "key": apiKey
+           "key": getEnviron('MAPS_API_KEY')
        }
         
-
+        url = getEnviron('MAPS_URL')
+    
         if zoom is not np.NaN:
             payload["zoom"] = zoom
             return requests.get(url, params=payload).content

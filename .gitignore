@@ -7,5 +7,8 @@
 
 # SHEETS URLS
 Forms.xlsx
-REGISTRO GEPH-DHPP_2023.xlsx
+REGISTRO GEPH-DHPP_2024.xlsx
+
+# Cógigos de computador(específicos de compilação)
+__pycache__/
 
