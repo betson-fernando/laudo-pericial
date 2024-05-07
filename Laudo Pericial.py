@@ -652,9 +652,9 @@ figCam = Figuras(images_path, "cam", "Tais câmeras foram fotografadas, e estão
 
 figBal = Figuras(images_path, "bal", "|A| |figura| <ref> |exibe|, no local da ocorrência, o(s) elemento(s) balístico(s) acima relatado(s)\n%, e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima\n:", "Fotografia indicando a localização de elemento(s) balístico(s).")
 
-figVit = Figuras(images_path, "vit", ["|Esta| |fotografia| |está| |exibida| |na| |figura| <ref>:", "|figura| <ref>"], "Fotografia do cadáver em sua posição original.")
+figVit = Figuras(images_path, "vit", ["|Esta| |fotografia| |está| |exibida| |na| |figura| <ref>:",  "|figura| <ref>"], "Fotografia do cadáver em sua posição original.")
 
-figVitMov = Figuras(images_path, "vitmov", "Também |foi| |realizada| |fotografia| após a remoção da vítima até local adequado à Análise Perinecroscópica, conforme |figura| <ref>:", "Fotografia do cadáver após a sua remoção a local adequado.")
+figVitMov = Figuras(images_path, "vitmov", ["Também |foi| |realizada| |fotografia| após a remoção da vítima até local adequado à Análise Perinecroscópica, conforme |figura| <ref>:", "|figura| <ref>"], "Fotografia do cadáver após a sua remoção a local adequado.")
 
 figTat = Figuras(images_path, "tat", "Na sua epiderme |foi| |constatada| |tatuagem|, |fotografada| e |exibida| |na| |figura| <ref>:", "Fotografia de tatuagem no cadáver.")
 
@@ -860,7 +860,7 @@ Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um
 
 {figVit.figsTex}
 
-{figVitMov.frase}
+{figVitMov.frase[0]}
 
 {figVitMov.figsTex}
 
@@ -920,7 +920,7 @@ exames += f"""
 exames += f"""
 \\subsubsection{{POSIÇÃO}}
  
-Quando da chegada da Equipe Técnica, o cadáver estava em decúbito ventral, com os membros flexionados, à exceção do inferior esquerdo, que se encontrava estendido ({figVit.frase[1]}).
+Quando da chegada da Equipe Técnica, o cadáver estava em decúbito ventral, com os membros flexionados, à exceção do inferior esquerdo, que se encontrava estendido ({figVitMov.frase[1] if figVitMov.numFigs != 0 else figVit.frase[1]}).
 
 \\subsubsection{{PERINECROSCOPIA}}
 
