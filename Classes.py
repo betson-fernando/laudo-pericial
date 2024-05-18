@@ -1,9 +1,10 @@
 import sys
 from pathlib import Path
 import re
+from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
-from GlobalFuncs import plural, getEnviron
+from GlobalFuncs import plural, assertType
 
 
 class Figuras:
@@ -80,3 +81,189 @@ class Figuras:
                 
                 for num in range(1, self.numFigs + 1):
                     self.figsTex += f"\\f{{{self.label}{num}}}{{{self.leg}}}\n"
+
+from datetime import datetime
+
+
+class Servidor:
+    
+    def __init__(self,  nome:str, cargo:str, operativa:str, mat:str, grupo:str):
+        while nome in [None, ""]:
+            nome = input("Digite o nome do Delegado que compareceu ao local: ")
+        self.nome = nome
+        self.mat = assertType('matrícula', mat, int)
+        self.operativa = operativa
+        self.cargo = cargo
+        self.grupo = grupo
+    
+    def getTexto(self):
+        textoMat = "" if self.mat in [None, ""] else f", inscrito no cadastro da {self.operativa} sob a matrícula {self.mat[0:3]}.{self.mat[3:6]}-{self.mat[6]}"
+        textoGrupo = "" if self.grupo in [None, ""] else f", pertencente a(o) {self.grupo}"
+        if self.grupo in [None, ""]:
+            textoGrupo = ""
+        elif "militar" in self.grupo.lower():
+            textoGrupo = f", pertencente ao {self.grupo}º Batalhão desta corporação"
+        else:
+            textoGrupo = f", pertencente a(o) {input('Digitar o grupo ao qual o First Responder pertence')}"
+            
+        return f"{self.cargo} \\textbf{{{self.nome.upper()}}}{textoMat}{textoGrupo}"
+
+
+class Vitima:
+    
+    nicList = []
+    
+    def __init__(self, nome:str, nic:int, tipoId:str, numId:str, dataNasc:datetime.date, filiacao:str):
+        self.nome = nome
+        
+        nic = assertType("nic", nic, int)
+        
+        while nic in nicList:
+            nic = assertType(input(f"O NIC {nic} já existe. Digite o número correto: "))
+        self.nic = nic
+        nicList.append(nic)
+        
+        self.tipoId = tipoId
+        self.numId = numId
+        self.dataNasc = assertType("data de nascimento", dataNasc, date)
+        self.filiacao = filiacao
+        
+        if self.nome is not None and None in [tipoId, numId, dataNasc, filiacao]:
+            print("Algumas informações da vítima não foram inseridas.\n Favor preencher:\n")
+            if self.tipoId is None:
+                self.tipoId = input("Tipo do documento de identificação: ")
+            if self.numId is None:
+                self.numId = input("Número do documento de identificação: ")
+            if self.dataNasc is None:
+                self.dataNasc = input("Data de nascimento (formato: dd/mm/aaaa): ")
+            if self.filiacao is None:
+                self.filiacao = input("Filiação (apenas um dos genitores): ")
+        
+    def getIdade(self, dataPlant: datetime.date) -> str:
+        """Esta função calcula a idade, baseado na data de nascimento (atributo da vítima) e na data da perícia (dataPlant).
+        Entradas: dataPlant --> data do plantão.
+        Retorno: string no formato [idade] [unidade de tempo]"""
+
+        try:
+            assert self.dataNasc == self.dataNasc and self.dataNasc != ""
+        except AssertionError:
+            print(f"A idade da vítima {self.nic} não pode ser calculada devido à ausência de sua data de nascimento.")
+            return ""
+        else:
+            if self.dataNasc.__class__ is str:  # Caso for string, formate para datetime.date
+                temp = self.dataNasc
+                self.dataNasc = datetime.strptime(temp, "%d/%m/%Y")
+            delta_date = monthdelta.monthmod(self.dataNasc, dataPlant)
+            delta_mes = delta_date[0].months
+
+            if delta_mes >= 12:
+                idade_temp = int(delta_mes / 12)
+                if idade_temp >= 2:
+                    return f"{idade_temp} anos"
+                else:
+                    return "1 ano"
+
+            elif 2 <= delta_mes <= 11:
+                return f"{delta_mes} meses"
+
+            elif delta_mes == 1:
+                return "1 mês"
+            else:
+                idade_temp = delta_date[1].days
+                if idade_temp >= 2:
+                    return f"{idade_temp} dias"
+                elif idade_temp == 1:
+                    return "1 dia"
+                else:
+                    return "menos de um dia de vida"
+
+
+class Local():
+    """Esta classe tem como instância uma localidade:
+    Variáveis de inicialização:
+        --> locId (int): Identificador do local;
+        --> coord (str, str): Coordenadas do local, no formato decimal, com separador decimal sendo o ponto (".");
+        --> bairro (str): Bairro do local;
+        --> rua (str, opcional): Rua do local;
+        --> tipo (str, opcional): externo, interno, ou misto.
+    
+    Métodos:
+        --> getMaps: retorna um mapa do local;
+        --> info: retorna informações do local.
+        --> toTex: retorna string pronta para uso no arquivo .tex.
+    """
+        
+    idList = []
+    
+    def __init__(self, locId:int, coord:(str,str), municipio:str,  bairro:str, rua:str="", tipo:str=""):
+
+        try:
+            assert locId not in self.idList
+        except AssertionError:
+            sys.exit(f"\nIdentificador de local já existente.\nUse um diferente de {self.idList}.\nO programa será encerrado.")
+        else:
+            self.locId = locId
+            self.idList.append(locId)
+        
+        
+        try:
+            # Esse try é apenas para garantir que os parâmetros da classe instaciada estão no formato correto. Não previne erros de usuários.
+            assert isinstance(coord, tuple) and len(coord) == 2
+            for item in coord:
+                assert isinstance(item, str)
+        except (ValueError, AssertionError):
+            sys.exit("As coordenadas não foram digitadas da forma correta.\nO argumento deve ser uma tupla de duas strings de números float, com separador decimal de ponto (\".\").\nO programa será encerrado.")
+        else:
+            # Testes de erro de entrada do usuário.
+            lat = testNumber("latitude", coord[0])
+            lon = testNumber("longitude", coord[1])
+            self.coord = (lat, lon)
+                
+        self.municipio = testEmpty("municipio", municipio)
+        self.bairro = testEmpty("bairro", bairro)
+        self.rua = rua  
+        self.tipo = tipo
+        
+        
+    def getMaps(self, addPlaces=[], zoom:int=np.NaN):
+        """Este método cria uma imagem em formato .jpg do google maps.
+        Entradas:
+            --> addPlaces (list(Local)): informar outras instâncias de Local caso necessitar adicionar outras coordenadas na imagem;
+            --> zoom (int): nível de zoom a ser aplicado na imagem. Caso addPlaces for vazio, o nível de zoom será obrigatório.
+        Retorno:
+            --> bytes: pronto para ser escrito em um arquivo.
+        """
+
+        places = [self] + addPlaces
+        
+        payload = {"size": "640x427",
+           "scale": "2",
+           "format": "jpeg",
+           "maptype": "hybrid",
+           "style": "feature:poi|visibility:off",
+           "markers": [f"color:red|label:{place.locId}|size:mid|{place.coord[0]},{place.coord[1]}" for place in places],
+           "key": environ.get('MAPS_API_KEY')
+        }
+        
+        url = environ.get('MAPS_URL')
+    
+        if zoom is not np.NaN:
+            payload["zoom"] = zoom
+            return requests.get(url, params=payload).content
+                
+        elif zoom is np.NaN and addPlaces != []:
+            return requests.get(url, params=payload).content
+            
+        else:
+            sys.exit("Para obter mapa com apenas um marcador, o zoom deve ser informado.\nO programa será fechado.")
+            
+    def info(self):
+        """Retorna informações do local.
+        Este método não tem entradas, e o retorno é uma string.."""
+        lat, long = self.coord
+        return dedent(f"""
+                Informações do local:
+                Endereço: {self.rua + ',' if self.rua != '' else ''} {self.bairro}, {self.municipio} - PE
+                Coordenadas: lat={lat}, long={long}
+                Tipo de local: {self.tipo}.
+                """)

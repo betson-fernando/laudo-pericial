@@ -1,12 +1,14 @@
 import sys
 from os import environ
-from dotenv import load_dotenv
 from pathlib import Path
 import requests
 import numpy as np
 import re
 from textwrap import dedent
-from .GlobalFuncs import testNumber, testEmpty, getEnviron
+
+sys.path.insert(0, str(Path(__file__).parent))
+from GlobalFuncs import testNumber, testEmpty
+sys.path.pop(0)
 
 
 class Local():
@@ -73,10 +75,10 @@ class Local():
            "maptype": "hybrid",
            "style": "feature:poi|visibility:off",
            "markers": [f"color:red|label:{place.locId}|size:mid|{place.coord[0]},{place.coord[1]}" for place in places],
-           "key": getEnviron('MAPS_API_KEY')
-       }
+           "key": environ.get('MAPS_API_KEY')
+        }
         
-        url = getEnviron('MAPS_URL')
+        url = environ.get('MAPS_URL')
     
         if zoom is not np.NaN:
             payload["zoom"] = zoom
@@ -98,4 +100,3 @@ class Local():
                 Coordenadas: lat={lat}, long={long}
                 Tipo de local: {self.tipo}.
                 """)
-                

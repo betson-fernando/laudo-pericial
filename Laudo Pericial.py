@@ -19,10 +19,10 @@ from zipfile import BadZipFile
 SCRIPT_PATH = Path(__file__).parent
 sys.path.insert(0, str(SCRIPT_PATH))
 
-#from Classes.Local import Local
-from Classes import Figuras
+
+from Classes import Figuras, Servidor, Vitima, Local
 from GlobalFuncs import textbf, ref, fig, getEnviron
-from Modules.MapImport import Local
+from Modules.MapImport.GetMap import getMap
 
 
 # Definição de funções: #######################################
@@ -347,7 +347,7 @@ def str_replace(dictio:{str:str}, orig_string: str) -> str:
     
 ##############################################################
 
-load_dotenv(find_dotenv("configs.env"))
+load_dotenv(Path(__file__).parent.joinpath('configs.env'))
 
 
 # Parâmetros para ajustar:
@@ -481,16 +481,24 @@ sheet_info.set_index("caso", inplace=True)
 
 row_info = return_tgt_row(sheet_info, std_casoTgt, f"O caso {std_casoTgt} não foi inserido no FORMULÁRIO DE INFORMAÇÕES GERAIS.", True)
 
+"""
 nomePm = row_info['nomePM']
 matPm = row_info['matPM']
 batPM = row_info['batPM']
-env = row_info['env']
+"""
 
+print(row_info['batPM'])
+print(row_info['nomePM'])
+print(row_info['matPM'])
+
+firstResponder = Servidor(nome = row_info['nomePM'].iloc[0], cargo = "Policial Militar", operativa = "Polícia Militar", mat = row_info['matPM'].iloc[0], grupo = row_info['batPM'].iloc[0])
+"""
 nomePmRes = macro("PM", nomePm)
 matPmRes = macro("matPM", matPm)
 batPMRes = macro("batPM", batPM)
+"""
 
-string_info = nomePmRes + matPmRes + batPMRes
+"""string_info = nomePmRes + matPmRes + batPMRes"""
 
 
 # INSERIR AS VÍTIMAS -------------------------------------------------------------------------------------------------------------------
@@ -591,7 +599,7 @@ if open_bal:
     sheet_bal = open_sheet(tab_form_path, aba_bal, header_index_form, col_bal)
     row_bal = return_tgt_row(sheet_bal, casoTgt, "BALÍSTICA", False)
 
-result_macros = string_info + string_vit + string_veic + string_bal
+result_macros = string_vit + string_veic + string_bal
 
 
 # Renomear Pasta do caso para incluir número da rep:
@@ -666,7 +674,7 @@ figLes = Figuras(images_path, "les", "|A| |figura| <ref> |exibe| as lesões acim
 
 figEsq = Figuras(images_path, "esq", r"|A| |figura| <ref> |exibe|, através de |esquema|, as lesões encontradas no cadáver. Em |tal| |esquema|, as lesões representadas por um círculo são características de entrada de projétil, enquanto as representadas por um ``X'', saída de projétil, e, por fim, as indicadas por um quadrado não puderam ter suas características identificadas no momento do Exame Pericial.", "Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. \textbf{Medicina Legal Prática Compreensível}. Barra do Garças: Ed. do Autor, 2010.")
 
-figBalVit = Figuras(images_path, "balvit", "Por fim, foi(foram) encontrado(s) elemento(s) balístico(s) sob cadáver, conforme |figura| <ref>:", "Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver.")
+figBalVit = Figuras(images_path, "balvit", ["Após estes registros iniciais, foi procedida a manipulação do cadáver, durante a qual foi(foram) encontrado(s), sob ele, elemento(s) balístico(s), conforme |figura| <ref>:", r"Este(s) elemento(s) balístico(s) foi(foram) encaminhado(s) ao \bal."], "Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver.")
 
 
 hist = f"""
@@ -731,10 +739,10 @@ for local in locais:
     lon = local.coord[1]
     
     with open(Path(images_path).joinpath(mapName + '.jpg'), 'wb') as mapa, open(Path(images_path).joinpath(mapZoomName + '.jpg'), 'wb') as mapaZoom:
-        mapa.write(local.getMaps(zoom=getEnviron('LOW_ZOOM')))
+        mapa.write(local.getMaps(zoom=environ('LOW_ZOOM')))
         mapa.close()
         
-        mapaZoom.write(local.getMaps(zoom=getEnviron('HIGH_ZOOM')))
+        mapaZoom.write(local.getMaps(zoom=environ('HIGH_ZOOM')))
         mapaZoom.close()
 
     
@@ -769,12 +777,10 @@ for local in locais:
         
         descLocalDetalhe += figInt.frase[0] + "\n\n" + figInt.figsTex + "\n\n" + figInt.frase[1] + "\n\n"
 
-isol = r"""
+isol = f"""
+\\section{{ISOLAMENTO E PRESERVAÇÃO DO LOCAL \\label{{isolamento}}}}
 
-\section{ISOLAMENTO E PRESERVAÇÃO DO LOCAL \label{isolamento}}
-
-No momento da chegada da Equipe Técnica, se faziam presentes alguns policiais militares,	
-	sob o comando do(a) \PM, matrícula \matPM, pertencentes ao \batPM{}º Batalhão de Polícia Militar, 
+No momento da chegada da Equipe Técnica, se faziam presentes alguns policiais militares, sob o comando do(a) {firstResponder.getTexto()}º batalhão desta corporação, 
 %e o isolamento abrangia todo o local imediato.
 %e o isolamento, apesar de abranger todo o local imediato, não continha algumas evidências encontradas, como será exposto neste laudo.
 %não havendo isolamento no local do fato por meio de fita ou outro instrumento que bloqueasse o acesso de transeuntes ao local.
@@ -864,6 +870,11 @@ Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um
 
 {figVitMov.figsTex}
 
+{figBalVit.frase[0]}
+
+{figBalVit.figsTex}
+
+{figBalVit.frase[1]}
 
 \\subsubsection{{IDENTIFICAÇÃO}}
 
@@ -962,10 +973,6 @@ Mediante Análise Perinecroscópica detalhada, foram constatadas lesões perfuro
 Tais lesões, bem como possivelmente outras que não foram encontradas quando da perícia no local, deverão ser adequadamente descritas e fotografadas quando da Perícia Tanatoscópica, a ser realizada por médicos legistas do Instituto de Medicina Legal Antônio Persivo Cunha - IML.
 
 %É importante ressaltar que foi encontrada uma lesão típica de defesa no antebraço direito (ver figura \\ref{{antebraco}}).
-
-{figBalVit.frase}
-
-{figBalVit.figsTex}
 
 """
 

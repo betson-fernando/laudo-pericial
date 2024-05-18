@@ -1,7 +1,2 @@
-from dotenv import load_dotenv, find_dotenv
-from os import environ
-from pathlib import Path
-import sys
-from .Classes import Local
+from . import GetMap
 
-load_dotenv(find_dotenv('configs.env'))

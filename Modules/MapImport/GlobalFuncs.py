@@ -30,9 +30,10 @@ def testEmpty(name, value):
     
     return value
 
+"""
 def getEnviron(key: str):
-    """Esta função recebe uma chave de uma variável de ambiente e retorna o seu valor.
-    Resulta em erro se a chave não existir ou for vazia."""
+    "Esta função recebe uma chave de uma variável de ambiente e retorna o seu valor.
+    Resulta em erro se a chave não existir ou for vazia."
     
     from os import environ
     
@@ -46,3 +47,4 @@ def getEnviron(key: str):
     except AssertionError:
         printf(f"O valor da chave {e} está vazio no arquivo 'configs.env'. Corrija e reenvie.")
         return None
+"""

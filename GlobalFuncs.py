@@ -1,19 +1,27 @@
-def testNumber(name, value):
-    """Esta função tem o objetivo de forçar o usuário a digitar um valor que seja uma string de número válido.
+from datetime import date
+
+def assertType(name, value, valueType=float):
+    """Esta função tem o objetivo de forçar o usuário a digitar um valor que seja uma string de um tipo válido.
        Entradas:
             --> name (str): nome do campo com erro para alertar o usuário;
-            --> value(str): o valor a ser testado.
-       Retorno (str): o valor, na forma de string, que pode ser convertido para número.
+            --> value (str): o valor a ser testado.
+            --> valueType (int, float, ...): tipo de objeto que deve ser 'value'.
+       Retorno (str): o valor, na forma de string, que pode ser convertido para o tipo especificado por valueType.
     """
     
+    temp = value
     while True:
         try:
-            float(value)
+            if valueType == date:
+                temp = str(temp)
+                valueType(int(temp[6:10]), int(temp[3:5]), int(temp[0:2]))
+            else:
+                valueType(temp)
         except ValueError:
-            value = input(f"O valor {name} deveria ser uma string numérica, com separador decimal de ponto ('.').\n"
+            temp = input(f"O valor {name} deveria ser uma string que pode ser convertida para {valueType},\n com separador decimal de ponto ('.'), e datas no formato dd/mm/aaaa, quando aplicável.\n"
                           f"Digite corretamente: ")
         else:
-            return value
+            return str(temp)
 
 
 def testEmpty(name, value):
