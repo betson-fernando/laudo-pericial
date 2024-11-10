@@ -16,11 +16,12 @@ import urllib.request as urlreq
 import urllib.error as urlerr
 from zipfile import BadZipFile
 
+
 SCRIPT_PATH = Path(__file__).parent
 sys.path.insert(0, str(SCRIPT_PATH))
 
 
-from Classes import Figuras, Servidor, Vitima, Local
+from Classes import Figuras, Servidor, Vitima, Local, Observacoes, Bcolors, Conclusoes
 from GlobalFuncs import textbf, ref, fig, getEnviron
 from Modules.MapImport.GetMap import getMap
 
@@ -45,13 +46,12 @@ def open_sheet(path: str, sheetname: str or int, hd_index: int, col_names: {str:
     inv_col_names = {v: k for k, v in col_names.items()} # Criando um dicionário invertendo chaves e valores, para, no retorno da função, renomear os nomes das colunas para o padrão do programa.
     try:
         with open(path, "rb") as f_inner:
-            # file_io_obj = io.BytesIO(f.read())
             sheet = pd.read_excel(f_inner, sheet_name=sheetname, header=hd_index, usecols=col_names.values(), engine='openpyxl').rename(columns=inv_col_names)
 
             for col, func in mappings.items():
                 sheet[col] = sheet[col].apply(func)
 
-            
+    
     except KeyError as e1:
         if 'Worksheet' in str(e1):
             print(f"\nUma aba cujo nome foi informado na planilha de parâmetros não foi encontrada no arquivo \"{Path(path).name}\".\nDescrição do erro: '{str(e1)}'")
@@ -135,61 +135,64 @@ def entrar_caso() -> [str, str, str]:
         if match is None:
             print('Número do caso digitado fora do formato ou ano menor que 2020. Digite o valor corretamente.\n')
         else:
-            num = match.group(1)
+            num = match.group(1).lstrip('0')   # Remover zeros à esquerda, se houver
             tipo = match.group(2)
             ano = match.group(3)
             if '.' in num:  # Remove separador de milhares, se existir
                 num = num[0] + num[2:]
-            num = (4 - num.__len__()) * '0' + num  # Adicione zeros na frente até o número ficar com 4 caracteres
+            # num = (4 - num.__len__()) * '0' + num  # Adicione zeros na frente até o número ficar com 4 caracteres
             if ano.__len__() == 2:
                 ano = '20' + ano
-
+           
     return [num, tipo, ano]
 
+# TODO: EXCLUIR ESTA FUNÇÃO APÓS ATUALIZAÇÃO
+if(False):
+    def calc_idade(nasc: datetime.date, plant: datetime.date) -> pd.Series(str):
+        """
+        Esta função calcula a idade, baseado na time de nascimento e na time da perícia.
+        Entradas: <datetime.datetime d1> e <datetime.datetime d2>: as duas datas, não importando a ordem.
+        Retorno: <str idade>"""
 
-def calc_idade(nasc: datetime.date, plant: datetime.date) -> pd.Series(str):
-    """Esta função calcula a idade, baseado na time de nascimento e na time da perícia.
-    Entradas: <datetime.datetime d1> e <datetime.datetime d2>: as duas datas, não importando a ordem.
-    Retorno: <str idade>"""
+        
+        series_iter = range(nasc.__len__())  # Iterador para ser usado nesta função
+        idade_res = pd.Series(index=series_iter, dtype=str)
 
-    series_iter = range(nasc.__len__())  # Iterador para ser usado nesta função
-    idade_res = pd.Series(index=series_iter, dtype=str)
+        for cont in series_iter:
 
-    for cont in series_iter:
-
-        try:
-            assert nasc.iloc[cont] == nasc.iloc[cont] and nasc.iloc[cont] != ""
-        except AssertionError:
-            print(f"A idade da vítima {cont + 1} não pode ser calculada devido à ausência de sua data de nascimento.")
-            idade_res.iat[cont] = ""
-        else:
-            if nasc.iloc[cont].__class__ is str:  # Caso for string, formate para datetime.date
-                temp = nasc.iloc[cont]
-                nasc.iat[cont] = datetime.strptime(temp, "%d/%m/%Y")
-            delta_date = monthdelta.monthmod(nasc.iloc[cont], plant.iloc[0])
-            delta_mes = delta_date[0].months
-
-            if delta_mes >= 12:
-                idade_temp = int(delta_mes / 12)
-                if idade_temp >= 2:
-                    idade_res.iat[cont] = f"{idade_temp} anos"
-                else:
-                    idade_res[cont] = "1 ano"
-
-            elif 2 <= delta_mes <= 11:
-                idade_res.iat[cont] = f"{delta_mes} meses"
-
-            elif delta_mes == 1:
-                idade_res.iat[cont] = "1 mês"
+            try:
+                assert nasc.iloc[cont] == nasc.iloc[cont] and nasc.iloc[cont] != ""
+            except AssertionError:
+                print(f"A idade da vítima {cont + 1} não pode ser calculada devido à ausência de sua data de nascimento.")
+                idade_res.iat[cont] = ""
             else:
-                idade_temp = delta_date[1].days
-                if idade_temp >= 2:
-                    idade_res.iat[cont] = f"{idade_temp} dias"
-                elif idade_temp == 1:
-                    idade_res.iat[cont] = "1 dia"
+                if nasc.iloc[cont].__class__ is str:  # Caso for string, formate para datetime.date
+                    temp = nasc.iloc[cont]
+                    nasc.iat[cont] = datetime.strptime(temp, "%d/%m/%Y")
+                delta_date = monthdelta.monthmod(nasc.iloc[cont], plant.iloc[0])
+                delta_mes = delta_date[0].months
+
+                if delta_mes >= 12:
+                    idade_temp = int(delta_mes / 12)
+                    if idade_temp >= 2:
+                        idade_res.iat[cont] = f"{idade_temp} anos"
+                    else:
+                        idade_res[cont] = "1 ano"
+
+                elif 2 <= delta_mes <= 11:
+                    idade_res.iat[cont] = f"{delta_mes} meses"
+
+                elif delta_mes == 1:
+                    idade_res.iat[cont] = "1 mês"
                 else:
-                    idade_res.iat[cont] = "menos de um dia de vida"
-    return idade_res
+                    idade_temp = delta_date[1].days
+                    if idade_temp >= 2:
+                        idade_res.iat[cont] = f"{idade_temp} dias"
+                    elif idade_temp == 1:
+                        idade_res.iat[cont] = "1 dia"
+                    else:
+                        idade_res.iat[cont] = "menos de um dia de vida"
+        return idade_res
 
 
 def createdirs(casoDirName: str, origPath: str, destPath: str, delete_origPath: bool = False) -> str:
@@ -202,21 +205,12 @@ def createdirs(casoDirName: str, origPath: str, destPath: str, delete_origPath: 
     --> delOrigPath (bool): Se 'True', deleta a pasta de origem ao finalizar. Padrão: 'False'
     A função retorna o caminho para a pasta criada (str)."""
 
-    # Predefinições para abrir caixas de diálogo
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes("-topmost", True)
-
     casoDirName = casoDirName.replace('/', '.')
     # Caminho para a pasta do caso em seu endereço final.
 
     caso_destpath = Path(destPath).joinpath(casoDirName)
     fotosOrigPath = Path(origPath).joinpath(casoDirName)
 
-    # Se a pasta das fotos não for encontrada, abra um diálogo para selecionar:
-    if not Path(fotosOrigPath).is_dir():
-        fotosOrigPath = tk.filedialog.askdirectory(title="Selecione a pasta onde estão as imagens do caso:",
-                                                     initialdir=origPath)
 
     shutil.copytree(Path(SCRIPT_PATH).joinpath("MODELO HOMICÍDIO"), caso_destpath)
     tex_destpath = Path(caso_destpath).joinpath("Arquivos .TEX")
@@ -286,7 +280,7 @@ def fmt_values(value, name="", forceInput=False) -> str:
         if value != "":
             data_str = value
         else:
-            data_str = input(f"O campo \"{name}\" não foi preenchido. Digite o valor: ") if forceInput else r"\textbf{PREENCHER PREENCHER PREENCHER}"
+            data_str = input(f"O campo \"{name}\" não foi preenchido. Digite o valor: ") if forceInput else textbf('PREENCHER PREENCHER PREENCHER')
     elif isinstance(value, float):
         data_str = int(value)
     elif isinstance(value, (datetime, np.datetime64)):
@@ -359,9 +353,6 @@ open_bal = False  # Se há elementos balísticos
 
 casoTgt = caso_num + "." + caso_tipo + "/" + caso_ano
 
-std_casoTgt = casoTgt
-# TODO: TROCAR std_casoTgt por casoTgt
-
 
 with open(Path(SCRIPT_PATH).joinpath("Parametros.xlsx"), "rb") as f:
 
@@ -392,7 +383,20 @@ aba_veic = ender.iloc[13, 1]  # Nome da aba das informações do veículo na tab
 aba_bal = ender.iloc[14, 1]  # Nome da aba das informações de balística na tabela dos formulários
 
 
-casodir_path = createdirs(casoTgt, casoOrigPath, casoDestPath)
+if not Path(casoOrigPath).is_dir():
+    print(f"{Bcolors.FAIL}O campo \"{ender.iloc[3, 0]}\" do arquivo \"Parâmetros.xlsx\" não é um diretório.\nCorrija e re-execute o aplicativo.{Bcolors.ENDC}")
+    exit()
+if not Path(casoDestPath).is_dir():
+    print(f"{Bcolors.FAIL}O campo \"{ender.iloc[4, 0]}\" do arquivo \"Parâmetros.xlsx\" não é um diretório.\nCorrija e re-execute o aplicativo.{Bcolors.ENDC}")
+    exit()
+
+casoDirName = (4 - casoTgt.index('.'))*'0' + casoTgt.replace('/', '.')   # Completar com zeros na frente e trocar '/' por '.' . Ex.: 8.9/2024 -> 0008.9.2024
+
+if not Path(casoOrigPath).joinpath(casoDirName).is_dir():
+    print(f"{Bcolors.FAIL}A pasta relativa ao caso {casoTgt} não existe. O programa será encerrado.{Bcolors.ENDC}")
+    exit()
+    
+casodir_path = createdirs(casoDirName, casoOrigPath, casoDestPath)
 
 #       O trecho abaixo recebe a planilha dos nomes dos títulos das colunas, e a separa em pares de colunas, todos eles
 # dicionários, a saber, os nomes das colunas da planilha preenchida na base, de informações gerais, da vítima, do
@@ -419,7 +423,7 @@ col_bal = {k: col_bal[k] for k in col_bal if k == k and col_bal[k] == col_bal[k]
 sheet_base = open_sheet(tab_base_path, str(aba_base), header_index_base, col_base)
 sheet_base.set_index("caso", inplace=True)
 
-row_base = return_tgt_row(sheet_base, std_casoTgt, f"O caso {std_casoTgt} não foi encontrado na planilha preenchida na base.", False)
+row_base = return_tgt_row(sheet_base, casoTgt, f"O caso {casoTgt} não foi encontrado na planilha preenchida na base.", False)
 
 # TODO: ESTA LINHA ABAIXO AINDA NÃO FOI TESTADA PARA A HIPÓTESE EM QUE O CASO NÃO É ENCONTRADO NA TABELA OFFLINE.
 if row_base.empty:
@@ -428,7 +432,7 @@ if row_base.empty:
 
     sheet_base = open_sheet(tab_base_path, str(aba_base), header_index_base, col_base)
     sheet_base.set_index("caso", inplace=True)
-    row_base = return_tgt_row(sheet_base, std_casoTgt, f"O caso {std_casoTgt} não foi encontrado na planilha preenchida na base.", True)
+    row_base = return_tgt_row(sheet_base, casoTgt, f"O caso {casoTgt} não foi encontrado na planilha preenchida na base.", True)
 
 # DADOS DA PLANILHA PREENCHIDA NA BASE:
 
@@ -444,13 +448,10 @@ req = row_base['req']
 aux = row_base['aux']
 delegado = row_base['delegado']
 vtPericia = row_base['vtPericia']
-#coord = row_base['lat'] + ', ' + row_base['lon']
 horaCiente = row_base['horaCiente']
 horaInicio = row_base['horaInicio']
 horaFim = row_base['horaFim']
-#rua = row_base['rua']
-#bairro = row_base['bairro']
-#municipio = row_base['municipio']
+
 
 dataCiente = dataPlant
 # TODO: TESTAR PARA HORÁRIOS DE MADRUGADA PARA ENTRAR NESSE IF E VER SE FUNCIONA = 1
@@ -464,55 +465,35 @@ dataCienteRes = fmt_values(dataCiente.iloc[0])
 reqRes = fmt_values(req.iloc[0])
 auxRes = fmt_values(aux.iloc[0])
 delegadoRes = fmt_values(delegado.iloc[0], "delegado", True)
-#coordRes = macro("coord", coord)
 horaCienteRes = fmt_values(horaCiente.iloc[0])
 horaInicioRes = fmt_values(horaInicio.iloc[0])
 horaFimRes = fmt_values(horaFim.iloc[0])
-#ruaRes = macro("rua", rua)
-#bairroRes = macro("bairro", bairro)
-#municipioRes = macro("municipio", municipio)
+
 
 
 download_sheet(tab_form_url, tab_form_path, True)
 
 # FORM DE INFORMAÇÕES DO LOCAL ---------------------------------------------------------------------------------
-sheet_info = open_sheet(tab_form_path, aba_info, header_index_form, col_info)
+sheet_info = open_sheet(tab_form_path, aba_info, header_index_form, col_info, mappings={'batPM': str})
 sheet_info.set_index("caso", inplace=True)
 
-row_info = return_tgt_row(sheet_info, std_casoTgt, f"O caso {std_casoTgt} não foi inserido no FORMULÁRIO DE INFORMAÇÕES GERAIS.", True)
+row_info = return_tgt_row(sheet_info, casoTgt, f"O caso {casoTgt} não foi inserido no FORMULÁRIO DE INFORMAÇÕES GERAIS.", True)
 
-"""
-nomePm = row_info['nomePM']
-matPm = row_info['matPM']
-batPM = row_info['batPM']
-"""
-
-print(row_info['batPM'])
-print(row_info['nomePM'])
-print(row_info['matPM'])
 
 firstResponder = Servidor(nome = row_info['nomePM'].iloc[0], cargo = "Policial Militar", operativa = "Polícia Militar", mat = row_info['matPM'].iloc[0], grupo = row_info['batPM'].iloc[0])
-"""
-nomePmRes = macro("PM", nomePm)
-matPmRes = macro("matPM", matPm)
-batPMRes = macro("batPM", batPM)
-"""
-
-"""string_info = nomePmRes + matPmRes + batPMRes"""
 
 
 # INSERIR AS VÍTIMAS -------------------------------------------------------------------------------------------------------------------
 string_vit = ""
 if open_vit:
-    sheet_vit_base = open_sheet(tab_base_path, str(aba_vit_base), header_index_vit_base, col_vit_base, mappings={'nic': str})
-    sheet_vit_loc = open_sheet(tab_form_path, aba_vit_loc, header_index_form, col_vit_loc, mappings={'nic': str})
-
+    sheet_vit_base = open_sheet(tab_base_path, str(aba_vit_base), header_index_vit_base, col_vit_base, mappings={'nic': float})
+    sheet_vit_loc = open_sheet(tab_form_path, aba_vit_loc, header_index_form, col_vit_loc, mappings={'nic': float})
 
     sheet_vit_base.set_index("ocorrencia_id", inplace=True)
     sheet_vit_loc.set_index("caso", inplace=True)
 
     row_vit_base = return_tgt_row(sheet_vit_base, row_base["caso_id"], "Vítima não encontrada na planilha preenchida na BASE. Provavelmente não foi cadastrada.", False)
-    row_vit_loc = return_tgt_row(sheet_vit_loc, std_casoTgt, "Caso não encontrado no FORMULÁRIO DE VÍTIMAS.", False)
+    row_vit_loc = return_tgt_row(sheet_vit_loc, casoTgt, "Caso não encontrado no FORMULÁRIO DE VÍTIMAS.", False)
 
     if row_vit_base.empty:
         # Se não houver vítima cadastrada, baixe a planilha e atualiza a parte de vítimas.
@@ -526,7 +507,7 @@ if open_vit:
         download_sheet(tab_form_url, tab_form_path, True)
         sheet_vit_loc = open_sheet(tab_form_path, aba_vit_loc, header_index_form, col_vit_loc, dtype={'nic': int})
         sheet_vit_loc.set_index("caso", inplace=True)
-        row_vit_loc = return_tgt_row(sheet_vit_loc, std_casoTgt, "Caso não encontrado no FORMULÁRIO DE VÍTIMAS.", True)
+        row_vit_loc = return_tgt_row(sheet_vit_loc, casoTgt, "Caso não encontrado no FORMULÁRIO DE VÍTIMAS.", True)
 
     # TRANSFORMAÇÕES ESPECÍFICAS
     row_vit_loc = row_vit_loc.applymap(lambda x: str(int(x)) if ((type(x) == str and str(x).isnumeric()) or type(x) == float) else x)
@@ -558,33 +539,13 @@ if open_vit:
         exit()
 
 
-    dataNasc = row_vit['dataNasc']
-    numDoc = row_vit['numDoc']
-    mae = row_vit['mae']
-    nat = pd.Series("")  # nat = row_vit_loc['nat']     "nat" desativado
-    nic = row_vit['nic']
-    nome = row_vit['nomeVit']
-    sexo = row_vit['sexo']
-
-    tipoDoc = pd.Series("")  # tipoDoc = row_vit['tipoDoc']
-    arma = row_vit['arma']
-    cal = row_vit['cal']  # TODO: TENTAR IMPORTAR O CALIBRE COMO STR, EX. ".40", E NÃO COMO NÚMERO, EX. "0.4"
-
-    idade = calc_idade(dataNasc, dataCiente)
-
-    dataNascRes = macro("datanasc", dataNasc)
-    idadeRes = macro("idade", idade)
-    numDocRes = macro("rg", numDoc)
-    filRes = macro("filiacao", mae)
-    natRes = macro("nat", nat)
-    nicRes = macro("nic", nic)
-    nomeRes = macro("nome", nome)
-    sexoRes = macro("sexo", sexo)
-    tipoDocRes = macro("tipoDoc", tipoDoc)
-    armaRes = macro("arma", arma)
-    calRes = macro("calibre", cal)
-
-    string_vit = f"{dataNascRes}{idadeRes}{numDocRes}{filRes}{natRes}{nicRes}{nomeRes}{sexoRes}{tipoDocRes}{armaRes}{calRes}"
+    transpRowVit = row_vit.transpose().to_dict()
+    
+    vitimas = []
+    for item in transpRowVit.values():
+        vitima = Vitima(item)
+        vitima.setIdade(dataCiente.iloc[0])
+        vitimas.append(vitima)
 
 
 # DADOS DO FORMULÁRIO DE INFORMAÇÕES DO VEÍCULO:
@@ -608,7 +569,7 @@ newName = f"{casoTgt.replace('/','.')} - {repRes.split('/')[0]}"  # Novo nome da
 Path(casodir_path).rename(f"{casoDestPath}/{newName}") # Renomear para o novo nome acima
 casodir_path = f"{casoDestPath}/{newName}" # Atualização do caminho para a pasta do caso.
 
-file_path = f"{casodir_path}/Arquivos .TEX/{casoTgt.replace('/', '.')}.tex"
+file_path = f"{casodir_path}/Arquivos .TEX/{casoDirName.replace('/', '.')}.tex"
 images_path = f"{casodir_path}/Fotografias/Descartadas"
 # ======================================================================================================================
 # ========================================== EDIÇÃO DO LAUDO ===========================================================
@@ -635,6 +596,7 @@ if tipoExameRes == "ossada":
 rodape = "\\footskip=7.75mm\n\n\\cfoot{\\fontsize{10}{0} \\selectfont {\\sl{Laudo Pericial nº " + casoRes + " - REP nº " + repRes + r"} \hfill {Página \thepage}}\\\rule{16cm}{2pt}  \\\baselineskip=12pt\bf Rua Doutor João Lacerda, nº 395, bairro do Cordeiro, Recife/ PE – CEP: 50.711-280 \newline Administrativo/ Plantão: (81) 3184-3547 - E-mail: geph.dhpp@gmail.com}"
 
 titulo = r"\centering \noindent \textbf{\emph{" + tipoExameRes + r"\\CASO Nº " + casoRes + "\, - REP Nº " + repRes + "}}"
+titulo = r"\centering \noindent " + textbf(r"\emph{" + tipoExameRes + r"\\CASO Nº " + casoRes + r"\, - REP Nº " + repRes + "}")
 
 # REMOVER ESTE TRECHO DE INFORMAÇÕES QUANDO HOUVER UMA GUI, E NÃO FOR MAIS NECESSÁRIO.
 info = "\\begin{comment}\n"
@@ -652,37 +614,41 @@ figTer = Figuras(images_path, "ter", "Ao adentrar no terreno, foi constatado que
         
 figInt = Figuras(images_path, "int", ["A residência, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme |figura| <ref>:", "O local imediato (onde se encontrava o cadáver) era o XXXXX, conforme pode ser observado |na| |figura| <ref>."], "Fotografia do interior da residência.")
 
+# TODO: Varíaveis figLencol e figBolso estão duplicadas na classe Vítimas. Como otimizar isso?
 figLencol = Figuras(images_path, "lencol", ["Em decorrência disto, foram verificados sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e lesões.", "se encontrava envolto por um cobertor (|figura| <ref>). Após exposto, tal cadáver"], "Fotografia, obtida quando da chegada da Equipe Técnica, do cadáver coberta.")
 
-figBolso = Figuras(images_path, "bolso", ["Também foram encontradas evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>.", "Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela."], "Fotografia do bolso do cadáver.")
+figBolso = Figuras(images_path, "bolso", ["Também foram encontradas evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>:", "Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela."], "Fotografia do bolso do cadáver.")
 
 figCam = Figuras(images_path, "cam", "Tais câmeras foram fotografadas, e estão exibidas |na| |figura| <ref>:", "Fotografia de câmera(s) no local.")
 
 figBal = Figuras(images_path, "bal", "|A| |figura| <ref> |exibe|, no local da ocorrência, o(s) elemento(s) balístico(s) acima relatado(s)\n%, e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima\n:", "Fotografia indicando a localização de elemento(s) balístico(s).")
 
+
 figVit = Figuras(images_path, "vit", ["|Esta| |fotografia| |está| |exibida| |na| |figura| <ref>:",  "|figura| <ref>"], "Fotografia do cadáver em sua posição original.")
 
-figVitMov = Figuras(images_path, "vitmov", ["Também |foi| |realizada| |fotografia| após a remoção da vítima até local adequado à Análise Perinecroscópica, conforme |figura| <ref>:", "|figura| <ref>"], "Fotografia do cadáver após a sua remoção a local adequado.")
+figVitMov = Figuras(images_path, "vitmov", ["Também |foi| |realizada| |fotografia| após a remoção da vítima até local adequado à Análise Perinecroscópica, conforme |figura| <ref>:", "(|figura| <ref>)"], "Fotografia do cadáver após a sua remoção a local adequado.")
 
 figTat = Figuras(images_path, "tat", "Na sua epiderme |foi| |constatada| |tatuagem|, |fotografada| e |exibida| |na| |figura| <ref>:", "Fotografia de tatuagem no cadáver.")
 
-figId = Figuras(images_path, "id", "|Figura| <ref>", "Fotografia de documento de identificação do cadáver.")
+figId = Figuras(images_path, "id", " (|Figura| <ref>)", "Fotografia de documento de identificação do cadáver.")
 
 figPert = Figuras(images_path, "pert", "|Foi| |feito| |registro| |fotográfico| destes itens, que estão exibidos |na| |figura| <ref>:", "Fotografia de objeto(s) encontrado(s) com o cadáver.")
 
 figLes = Figuras(images_path, "les", "|A| |figura| <ref> |exibe| as lesões acima relatadas\n%,e as numerações nas imagens correspondem àquelas que identificam as lesões na lista acima\n:", "Lesões constatadas no cadáver.")
 
-figEsq = Figuras(images_path, "esq", r"|A| |figura| <ref> |exibe|, através de |esquema|, as lesões encontradas no cadáver. Em |tal| |esquema|, as lesões representadas por um círculo são características de entrada de projétil, enquanto as representadas por um ``X'', saída de projétil, e, por fim, as indicadas por um quadrado não puderam ter suas características identificadas no momento do Exame Pericial.", "Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. \textbf{Medicina Legal Prática Compreensível}. Barra do Garças: Ed. do Autor, 2010.")
+figEsq = Figuras(images_path, "esq", r"|A| |figura| <ref> |exibe|, através de |esquema|, as lesões encontradas no cadáver. Em |tal| |esquema|, as lesões representadas por um círculo são características de entrada de projétil, enquanto as representadas por um ``X'', saída de projétil, e, por fim, as indicadas por um quadrado não puderam ter suas características identificadas no momento do Exame Pericial.", f"Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. {textbf('Medicina Legal Prática Compreensível')}. Barra do Garças: Ed. do Autor, 2010.")
 
 figBalVit = Figuras(images_path, "balvit", ["Após estes registros iniciais, foi procedida a manipulação do cadáver, durante a qual foi(foram) encontrado(s), sob ele, elemento(s) balístico(s), conforme |figura| <ref>:", r"Este(s) elemento(s) balístico(s) foi(foram) encaminhado(s) ao \bal."], "Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver.")
+
+figVest = Figuras(images_path, "vest", ["|Todo| |o| |vestígio| |foi| devidamente |fotografado| no local, |selado| em |lacre| |numerado|, e novamente |fotografado| em |seu| |lacre|, conforme |figura| <ref>, antes de |ser| |enviado| |ao| |seu| |respectivo| |destino|. Detalhes |do| |envio| poderão ser |consultado|"], "Fotografia de vestígio lacrado. Na faixa vermelha está presente o número do lacre")
 
 
 hist = f"""
 \\section{{HISTÓRICO DO CASO}}
 
-À(s) {horaCienteRes} do dia {dataCienteRes}, o \\textbf{{GRUPO ESPECIALIZADO EM PERÍCIAS DE HOMICÍDIOS (GEPH-DHPP-IC), DO INSTITUTO DE CRIMINALISTICA PROFESSOR ARMANDO SAMICO}}, recebeu, por telefone, a requisição nº \\textbf{{{reqRes}}}, do Centro Integrado de Operações de Defesa Social do Estado de Pernambuco \\textbf{{(CIODS-PE)}}, no sentido de ser procedido ao competente Exame Pericial no local abaixo mencionado.
+À(s) {horaCienteRes} do dia {dataCienteRes}, o {textbf("GRUPO ESPECIALIZADO EM PERÍCIAS DE HOMICÍDIOS (GEPH-DHPP-IC), DO INSTITUTO DE CRIMINALISTICA PROFESSOR ARMANDO SAMICO")}, recebeu, por telefone, a requisição nº {textbf(reqRes)}, do Centro Integrado de Operações de Defesa Social do Estado de Pernambuco {textbf("(CIODS-PE)")}, no sentido de ser procedido ao competente Exame Pericial no local abaixo mencionado.
 
-O plantão deste instituto atendeu à solicitação, designando, portanto, uma equipe formada pelo Perito Criminal \\textbf{{BETSON FERNANDO DELGADO DOS SANTOS ANDRADE}} e pelo Agente de Perícia \\textbf{{{auxRes}}}, em cuja localização chegou à(s) {horaInicioRes}, iniciando os trabalhos periciais, os quais foram concluídos à(s) {horaFimRes}."""
+O plantão deste instituto atendeu à solicitação, designando, portanto, uma equipe formada pelo Perito Criminal {textbf("BETSON FERNANDO DELGADO DOS SANTOS ANDRADE")} e pelo Agente de Perícia {textbf(auxRes)}, em cuja localização chegou à(s) {horaInicioRes}, iniciando os trabalhos periciais, os quais foram concluídos à(s) {horaFimRes}."""
 
 objetivo = r"""
 \section{DO OBJETIVO PERICIAL}
@@ -718,14 +684,6 @@ Quando da chegada da Equipe Técnica ao local, foi observado que o tempo se enco
 %
 %No que tange à iluminação, a Equipe Técnica realizou a perícia no período noturno, e o local não era provido de iluminação artificial adequada, tornando a visibilidade limitada durante os Exames Periciais.
 
-%Foi constatado também que a ocorrência se deu
-	%em via de nome inexistente, mais especificamente nas coordenadas geográficas \coord.
-%	no endereço \textbf{\rua, \bairro, \municipio - PE}. Mais especificamente, esta localidade pode ser representada pelas coordenadas geográficas cartesianas \textbf{\coord}.
-%Esta localização se também se encontra representada através das figuras \ref{mapa} e \ref{mapazoom}, que mostram fotografias do local da ocorrência obtidas por meios aeroespaciais (fonte: {\sl Google Earth}).
-
-%\f{mapa}{Mapa em escala reduzida no qual o marcador vermelho indica o local da ocorrência.}
-%\f{mapazoom}{Mapa em escala ampliada no qual o marcador vermelho indica o local da ocorrência.}
-
 Tratava-se de uma área ocupada por casas de padrão aquisitivo baixo, povoada, plana, com as vias cobertas por paralelepípedos, e destinadas ao tráfego local.
 
 
@@ -739,10 +697,10 @@ for local in locais:
     lon = local.coord[1]
     
     with open(Path(images_path).joinpath(mapName + '.jpg'), 'wb') as mapa, open(Path(images_path).joinpath(mapZoomName + '.jpg'), 'wb') as mapaZoom:
-        mapa.write(local.getMaps(zoom=environ('LOW_ZOOM')))
+        mapa.write(local.getMaps(zoom=environ['LOW_ZOOM']))
         mapa.close()
         
-        mapaZoom.write(local.getMaps(zoom=environ('HIGH_ZOOM')))
+        mapaZoom.write(local.getMaps(zoom=environ['HIGH_ZOOM']))
         mapaZoom.close()
 
     
@@ -780,7 +738,7 @@ for local in locais:
 isol = f"""
 \\section{{ISOLAMENTO E PRESERVAÇÃO DO LOCAL \\label{{isolamento}}}}
 
-No momento da chegada da Equipe Técnica, se faziam presentes alguns policiais militares, sob o comando do(a) {firstResponder.getTexto()}º batalhão desta corporação, 
+No momento da chegada da Equipe Técnica, se faziam presentes alguns policiais militares, sob o comando do(a) {firstResponder.getTexto()}, 
 %e o isolamento abrangia todo o local imediato.
 %e o isolamento, apesar de abranger todo o local imediato, não continha algumas evidências encontradas, como será exposto neste laudo.
 %não havendo isolamento no local do fato por meio de fita ou outro instrumento que bloqueasse o acesso de transeuntes ao local.
@@ -810,10 +768,10 @@ Ao chegar ao local, a Equipe Técnica constatou a existência de várias câmera
 
 \\begin{{itemize}}
 
-	\\item \\textbf{{Uma (01)}} câmera no Edifício Bella Vista, localizado na R. dos Navegantes;
-	\\item \\textbf{{Três (03)}} câmeras no Edifício Praça do Mar, localizado na R. dos Navegantes, nº 4862;
-	\\item \\textbf{{Uma (01)}} câmera no Edifício Canárias, localizado na R. Dr. Nilo Dornelas Câmara, nº 90;
-	\\item \\textbf{{Uma (01)}} câmera na Galeria Cidade Sul, localizada na Av. Conselheiro Aguiar, nº 5025 (mais precisamente na esquina desta avenina com a R. Dr. Nilo Dornelas Câmara).
+	\\item {textbf("Uma (01)")} câmera no Edifício Bella Vista, localizado na R. dos Navegantes;
+	\\item {textbf("Três (03)")} câmeras no Edifício Praça do Mar, localizado na R. dos Navegantes, nº 4862;
+	\\item {textbf("Uma (01)")} câmera no Edifício Canárias, localizado na R. Dr. Nilo Dornelas Câmara, nº 90;
+	\\item {textbf("Uma (01)")} câmera na Galeria Cidade Sul, localizada na Av. Conselheiro Aguiar, nº 5025 (mais precisamente na esquina desta avenina com a R. Dr. Nilo Dornelas Câmara).
 
 \\end{{itemize}}
 
@@ -840,7 +798,7 @@ if figBal.numFigs > 0:
 
         {figBal.figsTex}
 
-        Estes elementos balísticos foram coletados, lacrados termicamente em invólucros plásticos, e enviados ao \\bal.
+        Estes elementos balísticos foram coletados, inseridos em invólucros plásticos, lacrados, e enviados ao \\bal.
         """
         
 exames += r"""
@@ -859,142 +817,37 @@ exames += r"""
 
 """
 
-exames += f"""
-\\subsection{{DO CADÁVER}}
+# EXCLUIR A VARIÁVEL EXAMES, E TROCAR PELO MÉTODO vitima.exames() quando disponível
 
-Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um cadáver, que {figLencol.frase[1]} foi registrado em diferentes direções para permitir uma completa visualização da posição e condições iniciais em que foi encontrado. {figVit.frase[0]}
+for vitima in vitimas:
+    exames += vitima.exames(images_path)
 
-{figVit.figsTex}
+vestigios = f"""
 
-{figVitMov.frase[0]}
+\\section{{DOS VESTÍGIOS \\label{{vestigios}}}}
 
-{figVitMov.figsTex}
+{figVest.frase[0]} no(s) Termo(s) de Encaminhamento de Vestígios (TEV) acostado(s) ao processo SEI pelo qual será enviado este Laudo Pericial.
 
-{figBalVit.frase[0]}
-
-{figBalVit.figsTex}
-
-{figBalVit.frase[1]}
-
-\\subsubsection{{IDENTIFICAÇÃO}}
-
-Mediante inspeção preliminar, foi constatado que este cadáver pertencia a um indivíduo do sexo masculino, tipo étnico faioderma, com cabelos ulótricos, barba e bigode presentes, de compleição normolínea, aparentando ter um metro e setenta centímetros de altura (1,70m) e aproximadamente 
-	\\idade{{ }}
-	%vinte (20) anos 
-de idade (figura \\ref{{rosto}}).
-
-\\f{{rosto}}{{Fotografia do rosto do cadáver.}}
-
-{figTat.frase}
-
-{figTat.figsTex}
-
-"""
-exames += f"""
-%No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise, motivo pelo qual sua identidade foi declarada como sendo desconhecida. 
-%No momento dos exames periciais, não foram apresentados quaisquer documentos que identificassem o indivíduo cujo cadáver estava sob análise. Contudo, a informação de familiares, aliada a pesquisa no sistema "Polícia Ágil", da Secretaria de Defesa Social de Pernambuco, revelou se tratar de \\textbf{{\\nome}}, filho(a) de \\filiacao. Seu número do R.G. era \\rg, com nascimento em \\datanasc, possuindo, portanto, \\idade{{ }}({figId.frase}).
-No momento dos exames periciais, foi encontrada uma Carteira de Identidade pertencente ao indivíduo cujo cadáver estava sob análise, constatando que seu nome era \\textbf{{\\nome}}, filho(a) de \\filiacao. Seu número do R.G. era \\rg, com nascimento em \\datanasc, possuindo, portanto, \\idade{{ }}({figId.frase}).
-%No momento dos exames periciais, foi apresentada a Carteira Nacional de Habilitação (CNH) do indivíduo cujo cadáver estava sob análise, constatando que seu nome era \\textbf{{\\nome}}, filho(a) de \\filiacao. Seu número do R.G. era \\rg, com nascimento em \\datanasc, possuindo, portanto, \\idade{{ }}({figId.frase}).
-%No momento dos exames periciais, foi apresentada a Carteira de Trabalho e Previdência Social do indivíduo cujo cadáver estava sob análise, de número \\CTPSnum{{ }}e série \\CTPSser, a partir da qual foi constatado que seu nome era \\textbf{{\\nome}}, filho(a) de \\filiacao. Seu número do R.G. era \\rg, com nascimento em \\datanasc, possuindo, portanto, \\idade{{ }}({figId.frase}).
-
-{figId.figsTex}
-"""
-exames += r"""
-Foi atribuído ao cadáver o Número de Identificação Cadavérica (NIC) \nic, colocada a Pulseira de Identificação Cadavérica (PIC) (figura \ref{pic}), e preenchido o Boletim de Identificação Cadavérica (BIC) (figura \ref{bic}).
-
-\f{pic}{Fotografia da PIC colocada no cadáver.}
-\f{bic}{Fotografia do BIC preenchido e encaminhado ao Instituto de Medicina Legal (IML).}
-"""
-
-exames += f"""
-\\subsubsection{{VESTES E ACESSÓRIOS}}
- 
-O cadáver ora periciado trajava camisa cinza, bermuda {{\\sl tactel}} na cor predominante preta, e calçava um par de sandálias de cores preta e vermelha ({figVit.frase[1]})."""
-
-if figPert.numFigs > 0:
-
-    exames += r"""
-    Ao analisar as adjacências e os bolsos presentes nas vestimentas do cadáver, foram encontrados os seguintes itens pessoais:
-
-    \begin{itemize}
-        \item
-        \item
-        \item
-    \end{itemize}"""
-
-exames += f"""
-{figPert.frase}
-
-{figPert.figsTex}
-"""
-
-exames += f"""
-\\subsubsection{{POSIÇÃO}}
- 
-Quando da chegada da Equipe Técnica, o cadáver estava em decúbito ventral, com os membros flexionados, à exceção do inferior esquerdo, que se encontrava estendido ({figVitMov.frase[1] if figVitMov.numFigs != 0 else figVit.frase[1]}).
-
-\\subsubsection{{PERINECROSCOPIA}}
-
-%TODO : Descrever rigidez, manchas hipostáticas, etc
-
-Mediante Análise Perinecroscópica detalhada, foram constatadas lesões perfurocontusas provocadas por projéteis disparados por arma de fogo, a saber:
-
-\\begin{{enumerate}}
-	\\item Lesão característica de saída de projétil na região epigástrica;
-	\\item Lesão característica de saída de projétil na região epigástrica;
-	\\item Lesão característica de entrada de projétil no flanco esquerdo;
-	\\item Lesão característica de saída de projétil na região torácica direita;
-	\\item Lesão característica de saída de projétil na região infraclavicular direita;
-	\\item Lesão característica de entrada de projétil no terço superior do braço direito;
-	\\item Lesão característica de entrada de projétil na região auricular direita;
-	\\item Lesão provocada por projétil disparado por arma de fogo no lado direito da região frontal;
-	\\item Lesão provocada por projétil disparado por arma de fogo na região nasal;
-	\\item Lesão provocada por projétil disparado por arma de fogo na região ilíaca direita;
-	\\item Lesão característica de entrada de projétil na região lombar esquerda;
-	\\item Lesão característica de entrada de projétil na região lombar direita;
-	\\item Lesão característica de entrada de projétil na região dorsal direita;
-	\\item Lesão característica de entrada de projétil na região escapular direita;
-	\\item Lesão característica de entrada de projétil na porção posterior do antebraço direito;
-	\\item Lesão característica de saída de projétil na porção anterior do antebraço direito;
-	\\item Lesão característica de entrada de projétil na região supraescapular direita;
-	\\item Lesão característica de entrada de projétil na região cervical;
-	\\item Lesão característica de entrada de projétil na região occipital;
-	\\item Lesão característica de entrada de projétil na região auricular esquerda.
-\\end{{enumerate}}
-
-{figLes.frase}
-
-{figLes.figsTex}
-
-{figEsq.frase}
-
-{figEsq.figsTex}
-
-Tais lesões, bem como possivelmente outras que não foram encontradas quando da perícia no local, deverão ser adequadamente descritas e fotografadas quando da Perícia Tanatoscópica, a ser realizada por médicos legistas do Instituto de Medicina Legal Antônio Persivo Cunha - IML.
-
-%É importante ressaltar que foi encontrada uma lesão típica de defesa no antebraço direito (ver figura \\ref{{antebraco}}).
+{figVest.figsTex}
 
 """
 
-conc = r"""
-\section{CONCLUSÕES}
+dinamica = r"""
 
-Fundamentado nos exames realizados e em tudo quanto foi exposto no corpo deste laudo, o Perito Criminal por ele responsável conclui que o indivíduo 
-%
-\textbf{\nome}, 
-%de \textbf{IDENTIDADE DESCONHECIDA}, 
-%
-cujo cadáver foi encontrado no dia \textbf{""" + dataCienteRes + r"""}, no local já mencionado, """
+\section{DISCUSSÃO DA DINÂMICA DO FATO \label{dinamica}}
 
-if "esclarecer" in tipoExameRes.lower():
-    conc += r"""foi encontrado em estado de óbito, mas sem lesões aparentes nem circunstâncias que indicassem, naquele momento, um crime intencional. 
-    Portanto, as circunstâncias da morte restam \textbf{A ESCLARECER}."""
-else:
-    conc += r"""teve morte violenta em decorrência de lesões produzidas por instrumento(s) 
-    %
-    \tipoinst{ }
-    %
-    (\MakeLowercase{\arma} ou similares) e que, pelas circunstâncias, caracteriza-se uma \textbf{AÇÃO HOMICIDA}."""
+Analisando minuciosamente as evidências encontradas no local, as lesões no cadáver, e todo o contexto que correlaciona as mesmas, entende o Perito Criminal que:
+
+\begin{itemize}
+	\item Escrever aqui
+
+\end{itemize}
+
+"""
+
+conclusoes = Conclusoes(vitimas)
+
+conc = conclusoes.texto(dataCiente.iloc[0])
 
 enc = r"""
 %\newpage
@@ -1016,15 +869,30 @@ string_dict = {
 '<MATERIAIS>': materiais, 
 '<DESC_LOCAL>': descLocalGeral + descLocalDetalhe,
 '<ISOLAMENTO>': isol, 
-'<EXAMES>': exames, 
+'<EXAMES>': exames,
+'<VESTÍGIOS>': vestigios if figVest.numFigs != 0 else "",
+'<DINÂMICA>': dinamica,
 '<CONCLUSÕES>': conc, 
 '<ENCERRAMENTO>': enc}
 
 new_str = str_replace(string_dict, file_str)
 
-
+def beautify(s):
+    s = re.sub(r"""( |\t)+    # Busca por qualquer caractere em branco horizontal, de 1 a infinitas vezes
+                    (?=          # Olha para frente para uma destas sequências abaixo:
+                        (\\\w*sec    # Procura por \sec, \subsec, \subsubsec, etc...
+                        |\\f{        # Procura por \f{
+                        |\\begin     # Procura por \begin
+                        |\\end))     # Procura por \end
+                        """, "", s, 0, re.X)
+    
+    s = re.sub(r"( |\t)+(?=\\item)", "\t", s)
+    s = re.sub(r" {4}", "\t", s)    # Substituir quatro espaços em branco pelo tab
+    
+    return s
+    
 f_out = open(file_path, mode="w", encoding='utf-8')
-f_out.write(new_str)
+f_out.write(beautify(new_str))
 f_out.close()
 
 # ======================================================================================================================
@@ -1033,6 +901,9 @@ f_out.close()
 
 subprocess.Popen(file_path, shell=True, creationflags = subprocess.DETACHED_PROCESS)  # Abrir arquivo .tex para editar
 subprocess.Popen(r'explorer "' + images_path.replace("/", "\\") + "\"")  # Abrir diretório de imagens para editar
+    
+obs = Observacoes(Path(images_path))
+obs.print()
 
 print(f"\n\nLaudo Pericial 4.0 >>> Execução terminada.\nResultado disponível em '{file_path}'\nAplicativo desenvolvido por BETSON FERNANDO (betson.fernando@gmail.com).\n\n")
 # input("Tecle \"ENTER\" para sair.")
@@ -1041,3 +912,4 @@ print(f"\n\nLaudo Pericial 4.0 >>> Execução terminada.\nResultado disponível 
 # TODO: INSERIR DADOS DE VEÍCULOS;
 # TODO: COLOCAR AS VARIÁVEIS PARA MINÚSCULO, SE POSSÍVEL, COM EXCEÇÃO DOS NOMES.
 # TODO: TESTAR MÚLTIPLOS HOMICÍDIOS (2)
+

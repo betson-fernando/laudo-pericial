@@ -76,9 +76,9 @@ if __name__ == "__main__":
 
     load_dotenv(Path(__file__).parent.joinpath('configs.env'))
     
-    numCoords = input("Insira o número de locais a serem
-    coordsStr = {1:input("Insira as coordenadas no formato do Google Maps: "), 2:input("Insira as coordenadas no formato do Google Maps: ")}
+    # numCoords = input("Insira o número de locais a serem")
+    coordsDic = {1:input("Insira as coordenadas no formato do Google Maps: ")}
     
-    getMap(coordsStr, Path("lowzoom.jpg"), environ.get('LOW_ZOOM'))
-    getMap(coordsStr, Path("highzoom.jpg"), environ.get('HIGH_ZOOM'))
+    getMap(coordsDic, Path("lowzoom.jpg"), environ.get('LOW_ZOOM'))
+    getMap(coordsDic, Path("highzoom.jpg"), environ.get('HIGH_ZOOM'))
 
