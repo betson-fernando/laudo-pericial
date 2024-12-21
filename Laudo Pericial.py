@@ -1,7 +1,7 @@
-import tkinter as tk
-from tkinter import filedialog
+#import tkinter as tk
+#from tkinter import filedialog
 import pandas as pd
-from datetime import datetime, timedelta, time, date
+from datetime import datetime, timedelta, time#, date
 import monthdelta
 import sys
 import shutil
@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 import subprocess
 import numpy as np
-from dotenv import find_dotenv, load_dotenv
+from dotenv import load_dotenv#, find_dotenv
 from os import environ
 
 import urllib.request as urlreq
@@ -23,7 +23,7 @@ sys.path.insert(0, str(SCRIPT_PATH))
 
 from Classes import Figuras, Servidor, Vitima, Local, Observacoes, Bcolors, Conclusoes
 from GlobalFuncs import textbf, ref, fig, getEnviron
-from Modules.MapImport.GetMap import getMap
+#from Modules.MapImport.GetMap import getMap
 
 
 # Definição de funções: #######################################
@@ -130,7 +130,7 @@ def entrar_caso() -> [str, str, str]:
 
     while match is None:
 
-        match = re1.match(input("Digite o número do caso:"))
+        match = re1.match(input(f"{Bcolors.OKGREEN}Digite o número do caso: {Bcolors.ENDC}"))
 
         if match is None:
             print('Número do caso digitado fora do formato ou ano menor que 2020. Digite o valor corretamente.\n')
@@ -253,15 +253,12 @@ def return_tgt_row(sheet: pd.DataFrame, index_str: str, message: str, exit_if_no
             shutil.rmtree(casodir_path)
             return exit()
         else:
-            # empty_line = pd.DataFrame(data=[[""]*len(sheet.columns)], columns=sheet.columns)
             return pd.DataFrame()
     else:
         if type(line) == pd.Series:
-            #temp = pd.DataFrame(line).swapaxes(0, 1).fillna("")
-
-            return pd.DataFrame(line).swapaxes(0, 1).fillna("").reset_index()
+            return pd.DataFrame(line).transpose().map(lambda x: "" if x==np.nan else x).reset_index()
         else:
-            return line.fillna("")
+            return line.map(lambda x: "" if x==np.nan else x)
 
 
 def fmt_values(value, name="", forceInput=False) -> str:
@@ -348,6 +345,39 @@ load_dotenv(Path(__file__).parent.joinpath('configs.env'))
 open_vit = True  # Se há vítimas
 open_veic = False  # Se há veículos
 open_bal = False  # Se há elementos balísticos
+
+instrucao = f"""
+Neste momento, você deve iniciar a confecção do laudo. Nomeie as figuras conforme suas funções no laudo:
+
+{Bcolors.OKGREEN}"ext"{Bcolors.ENDC}: Fotografia mostrando o local da ocorrência.
+{Bcolors.OKGREEN}"ter"{Bcolors.ENDC}: Fotografia de terreno pertencente ao lote em tela.     
+{Bcolors.OKGREEN}"int"{Bcolors.ENDC}: Fotografia do interior da residência.
+
+{Bcolors.OKGREEN}"lencol"{Bcolors.ENDC}: Fotografia, obtida quando da chegada da Equipe Técnica, do cadáver coberta.
+{Bcolors.OKGREEN}"bolso"{Bcolors.ENDC}: Fotografia do bolso do cadáver.
+{Bcolors.OKGREEN}"pessoas"{Bcolors.ENDC}: Fotografia de pessoas em área que deveria estar isolada.
+
+{Bcolors.OKGREEN}"cam"{Bcolors.ENDC}: Fotografia de câmera(s) no local.
+
+{Bcolors.OKGREEN}"bal"{Bcolors.ENDC}: Fotografia indicando a localização de elemento(s) balístico(s).
+
+{Bcolors.OKGREEN}"vit"{Bcolors.ENDC}: Fotografia do cadáver em sua posição original.
+{Bcolors.OKGREEN}"vitmov"{Bcolors.ENDC}: Fotografia do cadáver após a sua remoção a local adequado.
+{Bcolors.OKGREEN}"balvit"{Bcolors.ENDC}: Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver.
+
+{Bcolors.OKGREEN}"tat"{Bcolors.ENDC}: Fotografia de tatuagem no cadáver.
+{Bcolors.OKGREEN}"id"{Bcolors.ENDC}: Fotografia de documento de identificação do cadáver.
+{Bcolors.OKGREEN}"pert"{Bcolors.ENDC}: Fotografia de objeto(s) encontrado(s) com o cadáver.
+{Bcolors.OKGREEN}"les"{Bcolors.ENDC}: Lesões constatadas no cadáver.
+{Bcolors.OKGREEN}"esqles"{Bcolors.ENDC}: Mapa esquemático das lesões constatadas no cadáver.
+{Bcolors.OKGREEN}"esq"{Bcolors.ENDC}: Esquema indicando os locais e tipos das lesões encontradas no cadáver.
+
+{Bcolors.OKGREEN}"vest"{Bcolors.ENDC}: Fotografia de vestígio lacrado. Na faixa vermelha está presente o número do lacre.
+
+Após concluir, aperte 'ENTER'.
+
+"""
+input(instrucao)
 
 [caso_num, caso_tipo, caso_ano] = entrar_caso()
 
@@ -510,18 +540,18 @@ if open_vit:
         row_vit_loc = return_tgt_row(sheet_vit_loc, casoTgt, "Caso não encontrado no FORMULÁRIO DE VÍTIMAS.", True)
 
     # TRANSFORMAÇÕES ESPECÍFICAS
-    row_vit_loc = row_vit_loc.applymap(lambda x: str(int(x)) if ((type(x) == str and str(x).isnumeric()) or type(x) == float) else x)
-    row_vit_base = row_vit_base.applymap(lambda x: str(int(x)) if ((type(x) == str and str(x).isnumeric()) or type(x) == float) else x)
+    row_vit_loc = row_vit_loc.map(lambda x: str(int(x)) if ((type(x) == str and str(x).isnumeric()) or type(x) == float) else x)
+    row_vit_base = row_vit_base.map(lambda x: str(int(x)) if ((type(x) == str and str(x).isnumeric()) or type(x) == float) else x)
 
     try:
         
         row_vit = row_vit_base.merge(row_vit_loc, sort=True, validate="1:1")
         assert row_vit.__len__() == row_vit_base.__len__() == row_vit_loc.__len__()
     except AssertionError:
-        print(f"Foi encontrada uma inconsistência entre as vítimas.\nProvavelmente o NIC informado na base e o informado no form da vítima não correspondem.\n Compare:\n"
+        print(f"{Bcolors.FAIL}Foi encontrada uma inconsistência entre as vítimas.\nProvavelmente o NIC informado na base e o informado no form da vítima não correspondem.\n Compare:\n"
               f"NIC(s) preenchido(s) na base:  {[item for item in row_vit_base['nic']]}\n"
               f"NIC(s) preenchido(s) no form de vítimas:  {[item for item in row_vit_loc['nic']]}\n."
-              f"O programa será encerrado. Corrija e re-execute.")
+              f"O programa será encerrado. Corrija e re-execute.{Bcolors.ENDC}")
         row_vit = pd.DataFrame([])
         exit()
     except pd.errors.MergeError as e1:  # Quando as colunas do nic não têm o mesmo nome entre as planilhas.
@@ -595,7 +625,7 @@ if tipoExameRes == "ossada":
 
 rodape = "\\footskip=7.75mm\n\n\\cfoot{\\fontsize{10}{0} \\selectfont {\\sl{Laudo Pericial nº " + casoRes + " - REP nº " + repRes + r"} \hfill {Página \thepage}}\\\rule{16cm}{2pt}  \\\baselineskip=12pt\bf Rua Doutor João Lacerda, nº 395, bairro do Cordeiro, Recife/ PE – CEP: 50.711-280 \newline Administrativo/ Plantão: (81) 3184-3547 - E-mail: geph.dhpp@gmail.com}"
 
-titulo = r"\centering \noindent \textbf{\emph{" + tipoExameRes + r"\\CASO Nº " + casoRes + "\, - REP Nº " + repRes + "}}"
+
 titulo = r"\centering \noindent " + textbf(r"\emph{" + tipoExameRes + r"\\CASO Nº " + casoRes + r"\, - REP Nº " + repRes + "}")
 
 # REMOVER ESTE TRECHO DE INFORMAÇÕES QUANDO HOUVER UMA GUI, E NÃO FOR MAIS NECESSÁRIO.
@@ -608,45 +638,35 @@ info += "\\end{comment}"
 
 # ============================= DECLARAÇÃO DAS FIGURAS =====================================
 
-figExt = Figuras(images_path, "ext", ["|A| |figura| <ref> |mostra| as condições do ambiente mediato no momento dos exames periciais:", "O ambiente imediato se deu no interior de um lote, já exibido externamente |na| |figura| <ref>."], "Fotografia mostrando o local da ocorrência.")
+figExt = Figuras(images_path, "ext", "Fotografia mostrando o local da ocorrência.")
+figTer = Figuras(images_path, "ter", "Fotografia de terreno pertencente ao lote em tela.")       
+figInt = Figuras(images_path, "int", "Fotografia do interior da residência.")
 
-figTer = Figuras(images_path, "ter", "Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela flexível e translúcida, com base em barro batido, conforme |figura| <ref>:", "Fotografia de terreno pertencente ao lote em tela.")
-        
-figInt = Figuras(images_path, "int", ["A residência, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme |figura| <ref>:", "O local imediato (onde se encontrava o cadáver) era o XXXXX, conforme pode ser observado |na| |figura| <ref>."], "Fotografia do interior da residência.")
+figLencol = Figuras(images_path, "lencol", "Fotografia, obtida quando da chegada da Equipe Técnica, do cadáver coberta.")
+figBolso = Figuras(images_path, "bolso", "Fotografia do bolso do cadáver.")
+figPessoas = Figuras(images_path, "pessoas", "Fotografia de pessoas em área que deveria estar isolada.")
 
-# TODO: Varíaveis figLencol e figBolso estão duplicadas na classe Vítimas. Como otimizar isso?
-figLencol = Figuras(images_path, "lencol", ["Em decorrência disto, foram verificados sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e lesões.", "se encontrava envolto por um cobertor (|figura| <ref>). Após exposto, tal cadáver"], "Fotografia, obtida quando da chegada da Equipe Técnica, do cadáver coberta.")
+figCam = Figuras(images_path, "cam", "Fotografia de câmera(s) no local.")
 
-figBolso = Figuras(images_path, "bolso", ["Também foram encontradas evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>:", "Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela."], "Fotografia do bolso do cadáver.")
+figBal = Figuras(images_path, "bal", "Fotografia indicando a localização de elemento(s) balístico(s).")
 
-figCam = Figuras(images_path, "cam", "Tais câmeras foram fotografadas, e estão exibidas |na| |figura| <ref>:", "Fotografia de câmera(s) no local.")
+figVit = Figuras(images_path, "vit", "Fotografia do cadáver em sua posição original.")
+figVitMov = Figuras(images_path, "vitmov", "Fotografia do cadáver após a sua remoção a local adequado.")
+figTat = Figuras(images_path, "tat", "Fotografia de tatuagem no cadáver.")
+figId = Figuras(images_path, "id", "Fotografia de documento de identificação do cadáver.")
+figPert = Figuras(images_path, "pert", "Fotografia de objeto(s) encontrado(s) com o cadáver.")
+figLes = Figuras(images_path, "les", "Lesões constatadas no cadáver.")
+figEsqLes = Figuras(images_path, "esqles", "Mapa esquemático das lesões constatadas no cadáver.")
+figEsq = Figuras(images_path, "esq", f"Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. {textbf('Medicina Legal Prática Compreensível')}. Barra do Garças: Ed. do Autor, 2010.")
+figBalVit = Figuras(images_path, "balvit", "Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver.")
 
-figBal = Figuras(images_path, "bal", "|A| |figura| <ref> |exibe|, no local da ocorrência, o(s) elemento(s) balístico(s) acima relatado(s)\n%, e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima\n:", "Fotografia indicando a localização de elemento(s) balístico(s).")
-
-
-figVit = Figuras(images_path, "vit", ["|Esta| |fotografia| |está| |exibida| |na| |figura| <ref>:",  "|figura| <ref>"], "Fotografia do cadáver em sua posição original.")
-
-figVitMov = Figuras(images_path, "vitmov", ["Também |foi| |realizada| |fotografia| após a remoção da vítima até local adequado à Análise Perinecroscópica, conforme |figura| <ref>:", "(|figura| <ref>)"], "Fotografia do cadáver após a sua remoção a local adequado.")
-
-figTat = Figuras(images_path, "tat", "Na sua epiderme |foi| |constatada| |tatuagem|, |fotografada| e |exibida| |na| |figura| <ref>:", "Fotografia de tatuagem no cadáver.")
-
-figId = Figuras(images_path, "id", " (|Figura| <ref>)", "Fotografia de documento de identificação do cadáver.")
-
-figPert = Figuras(images_path, "pert", "|Foi| |feito| |registro| |fotográfico| destes itens, que estão exibidos |na| |figura| <ref>:", "Fotografia de objeto(s) encontrado(s) com o cadáver.")
-
-figLes = Figuras(images_path, "les", "|A| |figura| <ref> |exibe| as lesões acima relatadas\n%,e as numerações nas imagens correspondem àquelas que identificam as lesões na lista acima\n:", "Lesões constatadas no cadáver.")
-
-figEsq = Figuras(images_path, "esq", r"|A| |figura| <ref> |exibe|, através de |esquema|, as lesões encontradas no cadáver. Em |tal| |esquema|, as lesões representadas por um círculo são características de entrada de projétil, enquanto as representadas por um ``X'', saída de projétil, e, por fim, as indicadas por um quadrado não puderam ter suas características identificadas no momento do Exame Pericial.", f"Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. {textbf('Medicina Legal Prática Compreensível')}. Barra do Garças: Ed. do Autor, 2010.")
-
-figBalVit = Figuras(images_path, "balvit", ["Após estes registros iniciais, foi procedida a manipulação do cadáver, durante a qual foi(foram) encontrado(s), sob ele, elemento(s) balístico(s), conforme |figura| <ref>:", r"Este(s) elemento(s) balístico(s) foi(foram) encaminhado(s) ao \bal."], "Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver.")
-
-figVest = Figuras(images_path, "vest", ["|Todo| |o| |vestígio| |foi| devidamente |fotografado| no local, |selado| em |lacre| |numerado|, e novamente |fotografado| em |seu| |lacre|, conforme |figura| <ref>, antes de |ser| |enviado| |ao| |seu| |respectivo| |destino|. Detalhes |do| |envio| poderão ser |consultado|"], "Fotografia de vestígio lacrado. Na faixa vermelha está presente o número do lacre")
+figVest = Figuras(images_path, "vest", "Fotografia de vestígio lacrado. Na faixa vermelha está presente o número do lacre")
 
 
 hist = f"""
 \\section{{HISTÓRICO DO CASO}}
 
-À(s) {horaCienteRes} do dia {dataCienteRes}, o {textbf("GRUPO ESPECIALIZADO EM PERÍCIAS DE HOMICÍDIOS (GEPH-DHPP-IC), DO INSTITUTO DE CRIMINALISTICA PROFESSOR ARMANDO SAMICO")}, recebeu, por telefone, a requisição nº {textbf(reqRes)}, do Centro Integrado de Operações de Defesa Social do Estado de Pernambuco {textbf("(CIODS-PE)")}, no sentido de ser procedido ao competente Exame Pericial no local abaixo mencionado.
+À(s) {horaCienteRes} do dia {dataCienteRes}, o {textbf("GRUPO ESPECIALIZADO EM PERÍCIAS DE HOMICÍDIOS (GEPH-DHPP-IC), DO INSTITUTO DE CRIMINALISTICA PROFESSOR ARMANDO SAMICO")}, recebeu, por meio digital, a requisição nº {textbf(reqRes)}, do Centro Integrado de Operações de Defesa Social do Estado de Pernambuco {textbf("(CIODS-PE)")}, no sentido de ser procedido ao competente Exame Pericial no local abaixo mencionado.
 
 O plantão deste instituto atendeu à solicitação, designando, portanto, uma equipe formada pelo Perito Criminal {textbf("BETSON FERNANDO DELGADO DOS SANTOS ANDRADE")} e pelo Agente de Perícia {textbf(auxRes)}, em cuja localização chegou à(s) {horaInicioRes}, iniciando os trabalhos periciais, os quais foram concluídos à(s) {horaFimRes}."""
 
@@ -717,23 +737,22 @@ for local in locais:
         {fig(f'{mapZoomName}', 'Mapa em escala ampliada no qual o marcador vermelho indica o local da ocorrência.')}
          
 
-        {figExt.frase[0]}
+        {figExt.textoFrase('|A| |figura| <ref> |mostra| as condições do ambiente mediato no momento dos exames periciais:')}
         
         {figExt.figsTex}
         
         
-        """
-        
+        """     
 
     if local.tipo.lower() in ['interno', 'misto']:
         
         if figTer.numFigs + figInt.numFigs > 0: # Caso houver terreno ou interior de residência fotografados:
-            descLocalDetalhe += figExt.frase[1] + "\n\n"
+            descLocalDetalhe += figExt.textoFrase('O ambiente imediato se deu no interior de um lote, já exibido externamente |na| |figura| <ref>.') + "\n\n"
         
         # Descrição do terreno
-        descLocalDetalhe += figTer.frase + "\n\n" + figTer.figsTex + "\n\n"
+        descLocalDetalhe += figTer.textoFrase('Ao adentrar no terreno, foi constatado que ele era guarnecido por cerca improvisada composta por tela flexível e translúcida, com base em barro batido, conforme |figura| <ref>:') + "\n\n" + figTer.figsTex + "\n\n"
         
-        descLocalDetalhe += figInt.frase[0] + "\n\n" + figInt.figsTex + "\n\n" + figInt.frase[1] + "\n\n"
+        descLocalDetalhe += figInt.textoFrase('O imóvel, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme |figura| <ref>:') + "\n\n" + figInt.figsTex + "\n\n" + figInt.textoFrase('O local imediato (onde se encontrava o cadáver) era o XXXXX, conforme pode ser observado |na| |figura| <ref>."], "Fotografia do interior da residência.') + "\n\n"
 
 isol = f"""
 \\section{{ISOLAMENTO E PRESERVAÇÃO DO LOCAL \\label{{isolamento}}}}
@@ -748,9 +767,46 @@ No momento da chegada da Equipe Técnica, se faziam presentes alguns policiais m
 %É importante ressaltar que havia poucas pessoas além das pertencentes às Operativas Policiais no momento dos Trabalhos Periciais. Todavia, 
 %É importante ressaltar que não havia pessoas além das pertencentes às Operativas Policiais no momento dos Trabalhos Periciais. Todavia, 
 %
-antes da presença da Polícia no local, transeuntes e/ou espectadores podem ter alterado, ocultado, ou removido, voluntariamente ou não, evidências de valor elucidativo no que concerne à autoria e/ou dinâmica das ações dos envolvidos na ocorrência em tela."""
+antes da presença da Polícia no local, transeuntes e/ou espectadores podem ter alterado, ocultado, ou removido, voluntariamente ou não, evidências de valor elucidativo no que concerne à autoria e/ou dinâmica das ações dos envolvidos na ocorrência em tela.
 
-isol += figLencol.frase[0] + "\n\n" + figLencol.figsTex + "\n" + figBolso.frase[0] + "\n\n" + figBolso.figsTex + "\n\n" + figBolso.frase[1] + "\n"
+"""
+
+# Se não houver quaisquer figuras de lençol, bolso, ou pessoas no local
+if figLencol.numFigs + figBolso.numFigs + figPessoas.numFigs == 0:
+    pass
+    
+# Se apenas houver figuras de apenas um destes: lençol, bolsos, ou pessoas no local (a operação abaixo é um XOR)
+elif (figLencol.numFigs>0) ^ (figBolso.numFigs>0) ^ (figPessoas.numFigs>0):
+
+    isol += 'Em decorrência disto, '
+    
+    if figLencol.numFigs:
+        isol += figLencol.textoFrase('foram verificados sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e das lesões.') + '\n\n' + figLencol.figsTex + '\n\n'
+  
+    elif figBolso.numFigs:
+        isol += figBolso.textoFrase('foram encontradas evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>. Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela.') + '\n\n' + figBolso.figsTex + '\n\n'
+    
+    else:
+        isol += figPessoas.textoFrase('foram encontradas pessoas em uma área que deveria estar isolada pela Operativa responsável pelo isolamento do local (|figura| <ref>). Tal falha frequentemente acarreta na alteração e/ou destruição de evidências no ambiente sob análise.') + '\n\n' + figPessoas.figsTex + '\n\n'
+
+# Todos os outros casos, a saber, dois mais dos seguintes casos: lençol na vítima, bolsos, ou pessoas no local.
+else:
+    isol += f"""
+    Em decorrência disto, foram encontradas evidências de alterações e/ou falhas no isolamento, conforme descrito abaixo:
+    
+    \\begin{{itemize}}
+        {figLencol.textoFrase(r'\item Sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e das lesões.')}
+        {figBolso.textoFrase(r'\item Evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>. Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela.')}
+        {figPessoas.textoFrase(r'\item A presença de pessoas em uma área que deveria estar isolada pela Operativa responsável pelo isolamento do local (|figura| <ref>). Tal falha frequentemente acarreta na alteração e/ou destruição de evidências no ambiente sob análise.')}
+    \\end{{itemize}}
+
+    {figLencol.figsTex}
+
+    {figBolso.figsTex}
+
+    {figPessoas.figsTex}
+
+    """
 
 
 # ============================================== SEÇÃO DE EXAMES ======================================================
@@ -775,15 +831,15 @@ Ao chegar ao local, a Equipe Técnica constatou a existência de várias câmera
 
 \\end{{itemize}}
 
-{figCam.frase}
+{figCam.textoFrase('Tais câmeras foram fotografadas, e estão exibidas |na| |figura| <ref>:')}
 
 {figCam.figsTex}        
         
 """
 
 if figBal.numFigs > 0:
-    exames += f"""
-    
+
+    exames += f"""  
         A equipe técnica analisou meticulosamente o local em busca de evidências relacionadas à ocorrência, encontrando elementos balísticos na quantidade e localização abaixo relacionados:
 
         \\begin{{enumerate}}
@@ -793,25 +849,26 @@ if figBal.numFigs > 0:
             \\item Estojo encontrado distante do cadáver, na direção da estação de tratamento de esgoto e da ponte sobre o Rio Capibaribe.
 
         \\end{{enumerate}}
-
-        {figBal.frase}
-
+        
+        {figBal.textoFrase('|A| |figura| <ref> |exibe|, no local da ocorrência, o(s) elemento(s) balístico(s) acima relatado(s)\n%, e as numerações presentes nas imagens (plaquetas amarelas) correspondem àquelas que identificam estes elementos na lista acima\n:')}
+    
         {figBal.figsTex}
 
         Estes elementos balísticos foram coletados, inseridos em invólucros plásticos, lacrados, e enviados ao \\bal.
+        
         """
         
 exames += r"""
 %Por fim, foram encontrados dois aparelhos de telefonia celular próximos à entrada lateral já descrita neste laudo (ver figura \\ref{celular}) que, no entendimento do perito, podem estar relacionados ao crime:
 
-%\\begin{itemize}
+%\begin{itemize}
 
-%	\\item \\textbf{Um (01)} celular da marca BLU, modelo Jenny TV 2.8 T276T I 13, IMEI 1 número 354278078362898, IMEI 2 número 35427807815297, com um chip da operadora OI com número de série 8955313929 862374013;
-%	\\item \\textbf{Um (01)} celular da marca PANASONIC, modelo não identificado, IMEI 1 número 35424507221845, IMEI 2 número 354245072218483, com chip da operadora Claro com número de série 8955 0534 9701 7294 3471.
+%	\item \textbf{Um (01)} celular da marca BLU, modelo Jenny TV 2.8 T276T I 13, IMEI 1 número 354278078362898, IMEI 2 número 35427807815297, com um chip da operadora OI com número de série 8955313929 862374013;
+%	\item \textbf{Um (01)} celular da marca PANASONIC, modelo não identificado, IMEI 1 número 35424507221845, IMEI 2 número 354245072218483, com chip da operadora Claro com número de série 8955 0534 9701 7294 3471.
 
-%\\end{itemize}
+%\end{itemize}
 
-%\\f{celular}{Fotografia dos celulares encontrados.}
+%\f{celular}{Fotografia dos celulares encontrados.}
 
 %É importante salientar que o local no qual os celulares foram encontrados não pode ser registrado em fotografia devido a defeitos de ordem técnica na câmera fotográfica utilizada pelo Perito Criminal.
 
@@ -820,13 +877,13 @@ exames += r"""
 # EXCLUIR A VARIÁVEL EXAMES, E TROCAR PELO MÉTODO vitima.exames() quando disponível
 
 for vitima in vitimas:
-    exames += vitima.exames(images_path)
+    exames += vitima.exames(figLencol, figVit, figVitMov, figTat, figId, figPert, figLes, figEsqLes, figBalVit)
 
 vestigios = f"""
 
 \\section{{DOS VESTÍGIOS \\label{{vestigios}}}}
 
-{figVest.frase[0]} no(s) Termo(s) de Encaminhamento de Vestígios (TEV) acostado(s) ao processo SEI pelo qual será enviado este Laudo Pericial.
+{figVest.textoFrase('|Todo| |o| |vestígio| |foi| devidamente |fotografado| no local, |selado| em |lacre| |numerado|, e novamente |fotografado| em |seu| |lacre|, conforme |figura| <ref>, antes de |ser| |enviado| |ao| |seu| |respectivo| |destino|. Detalhes |do| |envio| poderão ser |consultado|')} no(s) Termo(s) de Encaminhamento de Vestígios (TEV) acostado(s) ao processo SEI pelo qual será enviado este Laudo Pericial.
 
 {figVest.figsTex}
 
@@ -884,10 +941,12 @@ def beautify(s):
                         |\\f{        # Procura por \f{
                         |\\begin     # Procura por \begin
                         |\\end))     # Procura por \end
-                        """, "", s, 0, re.X)
+                        """, "", s, flags=re.X)
     
     s = re.sub(r"( |\t)+(?=\\item)", "\t", s)
     s = re.sub(r" {4}", "\t", s)    # Substituir quatro espaços em branco pelo tab
+    s = re.sub(r"\t+\n", "\n", s)
+    s = re.sub(r"\n{3,}", "\n\n", s)
     
     return s
     

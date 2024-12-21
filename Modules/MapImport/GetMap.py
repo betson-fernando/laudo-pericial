@@ -62,7 +62,7 @@ def getMap(coordsDic:dict, savePath:Path or str, zoom:int = np.nan, ):
     if zoom is not np.nan:
         payload["zoom"] = zoom
         
-    elif (zoom is np.NaN and len(coordsDic) == 1):
+    elif (zoom is np.nan and len(coordsDic) == 1):
         sys.exit("Para obter mapa com apenas um marcador, o zoom deve ser informado.\nO programa será fechado.")
 
     figData = requests.get(url, params=payload).content

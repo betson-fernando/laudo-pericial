@@ -28,7 +28,7 @@ def testEmpty(name, value):
     """
     import numpy as np
 
-    while value == "" or value is np.NaN:
+    while value == "" or value is np.nan:
         value = input(f"O campo '{name}' não foi preenchido. Digite-o: ")
     
     return value
@@ -67,7 +67,7 @@ def testEmpty(name, value):
     """
     import numpy as np
 
-    while value == "" or value is np.NaN:
+    while value == "" or value is np.nan:
         value = input(f"O campo '{name}' não foi preenchido. Digite-o: ")
     
     return value
