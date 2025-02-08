@@ -152,28 +152,37 @@ class Vitima:
     
     # def __init__(self, nome:str, nic:int, tipoDoc:str, numDoc:str, dataNasc:datetime.date, idade:int, filiacao:str, sexo:str, arma:list[str] or str): EXCLUIR SE COM A LINHA ABAIXO DER CERTO
     def __init__(self, dic:dict):
+    
+        nic = dic.get("nic")
+        if nic == "":
+            print("O valor do NIC não foi digitado. O programa será fechado.")
+            exit()
+        nic = assertType("nic", nic, int)
+        while nic in self.nicList:
+            nic = assertType(input(f"O NIC {nic} já existe. Digite o número correto: "))
+        self.nic = nic
         
         self.nome = dic.get("nomeVit")
         while self.nome in ["", None]:
-            self.nome = input(f"{Bcolors.WARNING}O nome da vítima não foi inserido na base de dados.\nInsira-o ou digite \"desconhecido\", caso não determinado.{Bcolors.ENDC}")
+            self.nome = input(f"{Bcolors.WARNING}O nome da vítima NIC {self.nic} não foi inserido na base de dados.\nInsira-o ou digite \"desconhecido\", caso não determinado.{Bcolors.ENDC}")
         
         self.dataNasc = self.setDataNasc(dic)
         
         self.filiacao = dic.get("mae")
         while self.filiacao.lower() in ["", None] and 'desconhec' not in self.nome.lower():
-            self.filiacao = input(f"{Bcolors.WARNING}O nome de um dos genitores da vítima não foi inserido. Digite-o: {Bcolors.ENDC}")
+            self.filiacao = input(f"{Bcolors.WARNING}O nome de um dos genitores da vítima NIC {self.nic} não foi inserido. Digite-o: {Bcolors.ENDC}")
         
         self.tipoDoc = dic.get("tipoDoc")
         while self.tipoDoc.lower() not in ["rg", "cnh", "carteira de trabalho", "desconhecido"] and 'desconhec' not in self.nome.lower():
-            self.tipoDoc = input(f"{Bcolors.WARNING}O tipo do documento não foi informado corretamente. Digite \"rg\", \"cnh\", \"carteira de trabalho\", ou \"desconhecido\". {Bcolors.ENDC}")
+            self.tipoDoc = input(f"{Bcolors.WARNING}O tipo do documento da vítima NIC {self.nic} não foi informado corretamente. Digite \"rg\", \"cnh\", \"carteira de trabalho\", ou \"desconhecido\". {Bcolors.ENDC}")
             
         self.numDoc = dic.get("numDoc")
         while self.numDoc in ["", None] and 'desconhec' not in self.nome.lower():
-            self.numDoc = input(f"{Bcolors.WARNING}O número do documento não foi informado. Insira-o ou digite \"desconhecido\": {Bcolors.ENDC}")
+            self.numDoc = input(f"{Bcolors.WARNING}O número do documento da vítima NIC {self.nic} não foi informado. Insira-o ou digite \"desconhecido\": {Bcolors.ENDC}")
         
         self.sexo = dic.get("sexo").lower()
         while self.sexo not in ["masc", "fem", "indeterminado"]:
-            self.sexo = input(f"{Bcolors.WARNING}O sexo da vítima não foi informado. Digite \"masc\", \"fem\", ou \"indeterminado\": {Bcolors.ENDC}")
+            self.sexo = input(f"{Bcolors.WARNING}O sexo da vítima NIC {self.nic} não foi informado. Digite \"masc\", \"fem\", ou \"indeterminado\": {Bcolors.ENDC}")
         if 'masc' in self.sexo:
             self.sexo = 'masculino'
         elif 'fem' in self.sexo:
@@ -181,11 +190,6 @@ class Vitima:
         else:
             self.sexo = 'indeterminado'
             
-        nic = dic.get("nic")
-        nic = assertType("nic", nic, int)
-        while nic in self.nicList:
-            nic = assertType(input(f"O NIC {nic} já existe. Digite o número correto: "))
-        self.nic = nic
         
         self.nicList.append(nic)
         self.ordVit = len(self.nicList)  # Ordem da vítima para separação de fotos (Vítima 1, Vítima 2, etc...)
@@ -204,6 +208,8 @@ class Vitima:
         self.instr = dic.get("arma").lower()
         self.causa = dic.get('causa').lower()
     
+    def getNic(self):
+        return self.nic
     
     def textoPelosFaciais(self):
         dicRes = {}
@@ -304,13 +310,13 @@ class Vitima:
             if 'desconhec' in self.nome.lower(): # Se for ID desconhecida, retorne None:
                 return None
             else:                 # Se não for ID desconhecida, peça para inserir a data de nascimento.
-                print(f"{Bcolors.WARNING}Data de nascimento não inserida. Insira no formato dd/mm/aaaa: {Bcolors.ENDC}")
+                print(f"{Bcolors.WARNING}Data de nascimento da vítima NIC {self.nic} não inserida. Insira no formato dd/mm/aaaa: {Bcolors.ENDC}")
                 dataNasc = ""
                 while True:
                     try:
                         return datetime.strptime(input(), "%d/%m/%Y")
                     except ValueError:
-                        print(f"{Bcolors.WARNING}Data de nascimento no formato errado. Insira no formato dd/mm/aaaa: {Bcolors.ENDC}")  
+                        print(f"{Bcolors.WARNING}Data de nascimento da vítima NIC {self.nic} no formato errado. Insira no formato dd/mm/aaaa: {Bcolors.ENDC}")  
                         
         elif dataNasc.__class__ is str:  # Caso for string, formate para datetime.date
         
@@ -661,8 +667,9 @@ class Conclusoes():
             else:
                 conc += f"os indivíduos {listToText(nomes)}, cujos cadáveres foram encontrados no dia {textbf(dataCiente.strftime('%d/%m/%Y'))}, no local já mencionado, tiveram mortes violentas causadas por projéteis disparados por arma(s) de fogo e que, pelas circunstâncias, caracteriza-se uma {textbf('AÇÃO HOMICIDA')}"
                 
-                for nome in self.objs.nome:
+                """for nome in self.objs.nome:
                     teste = ""
+                """
         return conc
         
 class Bcolors:

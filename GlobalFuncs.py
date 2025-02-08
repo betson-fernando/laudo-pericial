@@ -34,7 +34,7 @@ def testEmpty(name, value):
     return value
     
             
-def assertType(name, value, valueType=float):
+def assertType(name, value, valueType=float, stopIfError=False):
     """Esta função tem o objetivo de forçar o usuário a digitar um valor que seja uma string de um tipo válido.
        Entradas:
             --> name (str): nome do campo com erro para alertar o usuário;
@@ -52,6 +52,9 @@ def assertType(name, value, valueType=float):
             else:
                 valueType(temp)
         except ValueError:
+            if stopIfError:
+                print(f"O valor {name} de uma das vítimas deveria ser uma string que pode ser convertida para {valueType},\n, com separador decimal de ponto ('.') e datas no formato dd/mm/aaaa, quando aplicável.\nO programa será encerrado.")
+                exit()
             temp = input(f"O valor {name} deveria ser uma string que pode ser convertida para {valueType},\n com separador decimal de ponto ('.'), e datas no formato dd/mm/aaaa, quando aplicável.\n"
                           f"Digite corretamente: ")
         else:

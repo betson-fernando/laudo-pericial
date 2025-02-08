@@ -67,7 +67,7 @@ def open_sheet(path: str, sheetname: str or int, hd_index: int, col_names: {str:
         exit()
     except ValueError as e3:
         print(f"\nProvavelmente alguma coluna cujo nome foi informado na planilha de parâmetros não foi encontrada na "
-              f"planilha {Path(path).name}>{sheetname}.\nDescrição do erro: '{str(e3)}'")
+              f"planilha {Path(path).name}>{sheetname}, ou um valor inadequado foi preenchido em algum caso desta planilha.\nDescrição do erro: '{str(e3)}'")
         sheet = None
         shutil.rmtree(casodir_path)
         exit()
@@ -146,54 +146,6 @@ def entrar_caso() -> [str, str, str]:
            
     return [num, tipo, ano]
 
-# TODO: EXCLUIR ESTA FUNÇÃO APÓS ATUALIZAÇÃO
-if(False):
-    def calc_idade(nasc: datetime.date, plant: datetime.date) -> pd.Series(str):
-        """
-        Esta função calcula a idade, baseado na time de nascimento e na time da perícia.
-        Entradas: <datetime.datetime d1> e <datetime.datetime d2>: as duas datas, não importando a ordem.
-        Retorno: <str idade>"""
-
-        
-        series_iter = range(nasc.__len__())  # Iterador para ser usado nesta função
-        idade_res = pd.Series(index=series_iter, dtype=str)
-
-        for cont in series_iter:
-
-            try:
-                assert nasc.iloc[cont] == nasc.iloc[cont] and nasc.iloc[cont] != ""
-            except AssertionError:
-                print(f"A idade da vítima {cont + 1} não pode ser calculada devido à ausência de sua data de nascimento.")
-                idade_res.iat[cont] = ""
-            else:
-                if nasc.iloc[cont].__class__ is str:  # Caso for string, formate para datetime.date
-                    temp = nasc.iloc[cont]
-                    nasc.iat[cont] = datetime.strptime(temp, "%d/%m/%Y")
-                delta_date = monthdelta.monthmod(nasc.iloc[cont], plant.iloc[0])
-                delta_mes = delta_date[0].months
-
-                if delta_mes >= 12:
-                    idade_temp = int(delta_mes / 12)
-                    if idade_temp >= 2:
-                        idade_res.iat[cont] = f"{idade_temp} anos"
-                    else:
-                        idade_res[cont] = "1 ano"
-
-                elif 2 <= delta_mes <= 11:
-                    idade_res.iat[cont] = f"{delta_mes} meses"
-
-                elif delta_mes == 1:
-                    idade_res.iat[cont] = "1 mês"
-                else:
-                    idade_temp = delta_date[1].days
-                    if idade_temp >= 2:
-                        idade_res.iat[cont] = f"{idade_temp} dias"
-                    elif idade_temp == 1:
-                        idade_res.iat[cont] = "1 dia"
-                    else:
-                        idade_res.iat[cont] = "menos de um dia de vida"
-        return idade_res
-
 
 def createdirs(casoDirName: str, origPath: str, destPath: str, delete_origPath: bool = False) -> str:
     """Esta função cria a estrutura de diretórios para salvar os arquivos do caso, copia imagens, e renomeia alguns
@@ -228,7 +180,7 @@ def createdirs(casoDirName: str, origPath: str, destPath: str, delete_origPath: 
 
 # Quando as classes forem implementadas, apagar função abaixo
 def return_tgt_row(sheet: pd.DataFrame, index_str: str, message: str, exit_if_not_found: bool = False):
-
+    #TODO: Se possível, inserir as conversões para outros tipos de dados nesta função, em vez de em open_sheet, pois nesta última ele tenta converter a tabela toda, e qualquer erro, em qualquer caso pode dar errado.
 
     """Esta função tem o objetivo de retornar a linha completa de um caso presente em uma planilha no formato DataFrame,
     além de substituir valores vazios ("NaN") por strings vazias.
@@ -256,9 +208,9 @@ def return_tgt_row(sheet: pd.DataFrame, index_str: str, message: str, exit_if_no
             return pd.DataFrame()
     else:
         if type(line) == pd.Series:
-            return pd.DataFrame(line).transpose().map(lambda x: "" if x==np.nan else x).reset_index()
+            return pd.DataFrame(line).transpose().map(lambda x: "" if x is np.nan else x).reset_index()
         else:
-            return line.map(lambda x: "" if x==np.nan else x)
+            return line.map(lambda x: "" if x is np.nan else x)
 
 
 def fmt_values(value, name="", forceInput=False) -> str:
@@ -540,12 +492,18 @@ if open_vit:
         row_vit_loc = return_tgt_row(sheet_vit_loc, casoTgt, "Caso não encontrado no FORMULÁRIO DE VÍTIMAS.", True)
 
     # TRANSFORMAÇÕES ESPECÍFICAS
-    row_vit_loc = row_vit_loc.map(lambda x: str(int(x)) if ((type(x) == str and str(x).isnumeric()) or type(x) == float) else x)
-    row_vit_base = row_vit_base.map(lambda x: str(int(x)) if ((type(x) == str and str(x).isnumeric()) or type(x) == float) else x)
+    row_vit_loc = row_vit_loc.map(lambda x: str(int(x)) if ((type(x) == str and x.isnumeric()) or (type(x) == float and x == x)) else x)
+    row_vit_base = row_vit_base.map(lambda x: str(int(x)) if ((type(x) == str and x.isnumeric()) or (type(x) == float and x == x)) else x)
+    """Descrição dos teste: type(x) == str and x.isnumeric() --> Caso x seja uma string com formato numérico, converta para inteiro (para tirar o ponto) e depois para string.
+                                isnumeric só retorna True para strings de números inteiros. Por isso o teste à frente para incluir float.
+                            type(x) == float and x == x --> Caso x for float e não for nan (nan é um float), converta para inteiro (para tirar o ponto) e depois para string.
+    """
 
     try:
-        
         row_vit = row_vit_base.merge(row_vit_loc, sort=True, validate="1:1")
+        # Por não ter o argumento 'on', que define em qual coluna realiza o merge, esta operação é feita na intersecção das colunas dos dataframes, que, neste caso, é apenas coluna 'NIC'.
+        # O parâmetro sort ordena o merge pela coluna chave, no caso 'NIC', para garantir que ele será sempre crescente
+        
         assert row_vit.__len__() == row_vit_base.__len__() == row_vit_loc.__len__()
     except AssertionError:
         print(f"{Bcolors.FAIL}Foi encontrada uma inconsistência entre as vítimas.\nProvavelmente o NIC informado na base e o informado no form da vítima não correspondem.\n Compare:\n"
@@ -641,25 +599,34 @@ info += "\\end{comment}"
 figExt = Figuras(images_path, "ext", "Fotografia mostrando o local da ocorrência.")
 figTer = Figuras(images_path, "ter", "Fotografia de terreno pertencente ao lote em tela.")       
 figInt = Figuras(images_path, "int", "Fotografia do interior da residência.")
-
-figLencol = Figuras(images_path, "lencol", "Fotografia, obtida quando da chegada da Equipe Técnica, do cadáver coberta.")
-figBolso = Figuras(images_path, "bolso", "Fotografia do bolso do cadáver.")
 figPessoas = Figuras(images_path, "pessoas", "Fotografia de pessoas em área que deveria estar isolada.")
-
 figCam = Figuras(images_path, "cam", "Fotografia de câmera(s) no local.")
 
+figLencol = []
+figBolso = []
+figVit = []
+figVitMov = []
+figEsqLes = []
+figBalVit = []
+figTat = []
+figId = []
+figPert = []
+figLes = []
+for num, vitima in enumerate(vitimas, start=1):
+    n = '' if len(vitimas) == 0 else str(num)  # Se houver apenas uma vítima, não espere número na frente do nome da figura
+
+    figLencol.append(Figuras(images_path, f"{n}lencol", f"Fotografia, obtida quando da chegada da Equipe Técnica, do cadáver NIC {vitima.getNic()} coberto."))
+    figBolso.append(Figuras(images_path, f"{n}bolso", f"Fotografia do bolso do cadáver NIC {vitima.getNic()}."))
+    figVit.append(Figuras(images_path, f"{n}vit", "Fotografia do cadáver em sua posição original."))
+    figVitMov.append(Figuras(images_path, f"{n}vitmov", "Fotografia do cadáver após a sua remoção a local adequado."))
+    figEsqLes.append(Figuras(images_path, f"{n}esqles", f"Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. {textbf('Medicina Legal Prática Compreensível')}. Barra do Garças: Ed. do Autor, 2010."))
+    figBalVit.append(Figuras(images_path, f"{n}balvit", "Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver e/ou sob a vítima."))
+    figTat.append(Figuras(images_path, f"{n}tat", "Fotografia de tatuagem no cadáver."))
+    figId.append(Figuras(images_path, f"{n}id", "Fotografia de documento de identificação do cadáver."))
+    figPert.append(Figuras(images_path, f"{n}pert", "Fotografia de objeto(s) encontrado(s) com o cadáver."))
+    figLes.append(Figuras(images_path, f"{n}les", "Lesões constatadas no cadáver."))
+
 figBal = Figuras(images_path, "bal", "Fotografia indicando a localização de elemento(s) balístico(s).")
-
-figVit = Figuras(images_path, "vit", "Fotografia do cadáver em sua posição original.")
-figVitMov = Figuras(images_path, "vitmov", "Fotografia do cadáver após a sua remoção a local adequado.")
-figTat = Figuras(images_path, "tat", "Fotografia de tatuagem no cadáver.")
-figId = Figuras(images_path, "id", "Fotografia de documento de identificação do cadáver.")
-figPert = Figuras(images_path, "pert", "Fotografia de objeto(s) encontrado(s) com o cadáver.")
-figLes = Figuras(images_path, "les", "Lesões constatadas no cadáver.")
-figEsqLes = Figuras(images_path, "esqles", "Mapa esquemático das lesões constatadas no cadáver.")
-figEsq = Figuras(images_path, "esq", f"Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. {textbf('Medicina Legal Prática Compreensível')}. Barra do Garças: Ed. do Autor, 2010.")
-figBalVit = Figuras(images_path, "balvit", "Fotografia de elemento(s) balístico(s) encontrado(s) dentro das vestes do cadáver.")
-
 figVest = Figuras(images_path, "vest", "Fotografia de vestígio lacrado. Na faixa vermelha está presente o número do lacre")
 
 
@@ -754,6 +721,7 @@ for local in locais:
         
         descLocalDetalhe += figInt.textoFrase('O imóvel, por sua vez, possuía dois acessos, sendo o principal (anterior) guarnecido por grade de aço e porta de alumínio. Em seu interior, havia sala de estar, três quartos (anterior, medial e posterior), banheiro, cozinha e área de serviço, conforme |figura| <ref>:') + "\n\n" + figInt.figsTex + "\n\n" + figInt.textoFrase('O local imediato (onde se encontrava o cadáver) era o XXXXX, conforme pode ser observado |na| |figura| <ref>."], "Fotografia do interior da residência.') + "\n\n"
 
+isolFigs = ""
 isol = f"""
 \\section{{ISOLAMENTO E PRESERVAÇÃO DO LOCAL \\label{{isolamento}}}}
 
@@ -771,42 +739,73 @@ antes da presença da Polícia no local, transeuntes e/ou espectadores podem ter
 
 """
 
+contAlt = sum([sum(item1) for item1 in [[item2.numFigs for item2 in figLencol], [item2.numFigs for item2 in figBolso], [figPessoas.numFigs]]])  # Contador para o número de figuras que indicam alterações.
+
+
 # Se não houver quaisquer figuras de lençol, bolso, ou pessoas no local
-if figLencol.numFigs + figBolso.numFigs + figPessoas.numFigs == 0:
+if contAlt == 0:
     pass
-    
-# Se apenas houver figuras de apenas um destes: lençol, bolsos, ou pessoas no local (a operação abaixo é um XOR)
-elif (figLencol.numFigs>0) ^ (figBolso.numFigs>0) ^ (figPessoas.numFigs>0):
 
-    isol += 'Em decorrência disto, '
-    
-    if figLencol.numFigs:
-        isol += figLencol.textoFrase('foram verificados sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e das lesões.') + '\n\n' + figLencol.figsTex + '\n\n'
-  
-    elif figBolso.numFigs:
-        isol += figBolso.textoFrase('foram encontradas evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>. Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela.') + '\n\n' + figBolso.figsTex + '\n\n'
-    
-    else:
-        isol += figPessoas.textoFrase('foram encontradas pessoas em uma área que deveria estar isolada pela Operativa responsável pelo isolamento do local (|figura| <ref>). Tal falha frequentemente acarreta na alteração e/ou destruição de evidências no ambiente sob análise.') + '\n\n' + figPessoas.figsTex + '\n\n'
-
-# Todos os outros casos, a saber, dois mais dos seguintes casos: lençol na vítima, bolsos, ou pessoas no local.
 else:
     isol += f"""
-    Em decorrência disto, foram encontradas evidências de alterações e/ou falhas no isolamento, conforme descrito abaixo:
+    Em decorrência disto, foi possível constatar sinais de alteração no local do crime, a saber:
     
-    \\begin{{itemize}}
-        {figLencol.textoFrase(r'\item Sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e das lesões.')}
-        {figBolso.textoFrase(r'\item Evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>. Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela.')}
-        {figPessoas.textoFrase(r'\item A presença de pessoas em uma área que deveria estar isolada pela Operativa responsável pelo isolamento do local (|figura| <ref>). Tal falha frequentemente acarreta na alteração e/ou destruição de evidências no ambiente sob análise.')}
+    \\begin{{itemize}}"""
+    
+    for n, item in enumerate(figLencol):
+        isol += item.textoFrase(f'\n\\item A cobertura do cadáver NIC {vitimas[n].nic} por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e das lesões.')
+        isolFigs += item.figsTex + '\n'
+    
+    for n, item in enumerate(figBolso):
+        isol += item.textoFrase(f'\n\\item Os bolsos do cadáver NIC {vitimas[n].nic} foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>. Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela.')
+        isolFigs += item.figsTex + '\n'
+    
+    isol += figPessoas.textoFrase('\n\\item Havia pessoas em uma área que deveria estar isolada pela Operativa responsável pelo isolamento do local (|figura| <ref>). Tal falha frequentemente acarreta na alteração e/ou destruição de evidências no ambiente sob análise.')
+    isolFigs += item.figsTex + '\n'
+    
+    isol += f"""
     \\end{{itemize}}
-
-    {figLencol.figsTex}
-
-    {figBolso.figsTex}
-
-    {figPessoas.figsTex}
-
+    
+    {isolFigs}
     """
+   
+# TODO: # Excluir quando a inserção de figuras funcionar.   
+if False:
+
+    if True:
+        pass
+    # Se apenas houver figuras de apenas um destes: lençol, bolsos, ou pessoas no local (a operação abaixo é um XOR)
+    elif (figLencol.numFigs>0) ^ (figBolso.numFigs>0) ^ (figPessoas.numFigs>0):
+
+        isol += 'Em decorrência disto, '
+        
+        if figLencol.numFigs:
+            isol += figLencol.textoFrase('foram verificados sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e das lesões.') + '\n\n' + figLencol.figsTex + '\n\n'
+      
+        elif figBolso.numFigs:
+            isol += figBolso.textoFrase('foram encontradas evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>. Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela.') + '\n\n' + figBolso.figsTex + '\n\n'
+        
+        else:
+            isol += figPessoas.textoFrase('foram encontradas pessoas em uma área que deveria estar isolada pela Operativa responsável pelo isolamento do local (|figura| <ref>). Tal falha frequentemente acarreta na alteração e/ou destruição de evidências no ambiente sob análise.') + '\n\n' + figPessoas.figsTex + '\n\n'
+
+    # Todos os outros casos, a saber, dois mais dos seguintes casos: lençol na vítima, bolsos, ou pessoas no local.
+    else:
+        isol += f"""
+        Em decorrência disto, foram encontradas evidências de alterações e/ou falhas no isolamento, conforme descrito abaixo:
+        
+        \\begin{{itemize}}
+            {figLencol.textoFrase(r'\item Sinais de alteração no local de crime, a saber, a cobertura do cadáver por um cobertor (|figura| <ref>), que pode levar, em alguns casos, a imprecisões na caracterização das manchas de sangue e das lesões.')}
+            {figBolso.textoFrase(r'\item Evidências de que seus bolsos foram alvo de busca, uma vez que se encontravam demasiadamente abertos, como mostra |a| |figura| <ref>. Não se pode afirmar quem realizou a busca no bolso do cadáver, porém podem ter sido subtraídos objetos como, por exemplo, aparelhos de telecomunicação celular, que poderiam fornecer a autoria do homicídio em tela.')}
+            {figPessoas.textoFrase(r'\item A presença de pessoas em uma área que deveria estar isolada pela Operativa responsável pelo isolamento do local (|figura| <ref>). Tal falha frequentemente acarreta na alteração e/ou destruição de evidências no ambiente sob análise.')}
+        \\end{{itemize}}
+
+        {figLencol.figsTex}
+
+        {figBolso.figsTex}
+
+        {figPessoas.figsTex}
+
+        """
 
 
 # ============================================== SEÇÃO DE EXAMES ======================================================
@@ -876,8 +875,8 @@ exames += r"""
 
 # EXCLUIR A VARIÁVEL EXAMES, E TROCAR PELO MÉTODO vitima.exames() quando disponível
 
-for vitima in vitimas:
-    exames += vitima.exames(figLencol, figVit, figVitMov, figTat, figId, figPert, figLes, figEsqLes, figBalVit)
+for n, vitima in enumerate(vitimas):
+    exames += vitima.exames(figLencol[n], figVit[n], figVitMov[n], figTat[n], figId[n], figPert[n], figLes[n], figEsqLes[n], figBalVit[n])
 
 vestigios = f"""
 
