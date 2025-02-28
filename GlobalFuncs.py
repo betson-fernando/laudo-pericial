@@ -1,4 +1,5 @@
 from datetime import date
+from math import isnan
 
 
 def testNumber(name, value):
@@ -11,8 +12,9 @@ def testNumber(name, value):
     
     while True:
         try:
-            float(value)
-        except ValueError:
+            # Esta linha realiza dois testes: float(value) testa se a string é conversível para float. Mas float('nan') é válido, o que obriga a usar a função isnan.   
+            assert not isnan(float(value))
+        except (ValueError, AssertionError):
             value = input(f"O valor {name} deveria ser uma string numérica, com separador decimal de ponto ('.').\n"
                           f"Digite corretamente: ")
         else:
@@ -166,3 +168,15 @@ def listToText(lst:list):
             texto += f"{item}, "
     
     return texto
+    
+ 
+def transform(x):
+    """Descrição dos teste: type(x) == str and x.isnumeric() --> Caso x seja uma string com formato numérico, converta para inteiro (para tirar o ponto) e depois para string.
+                                isnumeric só retorna True para strings de números inteiros. Por isso o teste à frente para incluir float.
+                            type(x) == float and x == x --> Caso x for float e não for nan (nan é um float), converta para inteiro (para tirar o ponto) e depois para string.
+    """
+    
+    if (type(x) == str and x.isnumeric()) or (type(x) == float and x == x):
+        return str(int(x))
+    else:
+        return x
