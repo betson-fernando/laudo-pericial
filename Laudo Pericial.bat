@@ -1,2 +1,2 @@
-py "C:\Users\GEPH-IC\Documents\Betson\Laudo Pericial\Laudo Pericial.py"
+py "Laudo Pericial.py"
 pause

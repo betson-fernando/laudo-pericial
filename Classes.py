@@ -9,6 +9,7 @@ import requests
 import codecs
 import monthdelta
 import pandas as pd
+from math import isnan
 
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
@@ -26,19 +27,29 @@ class Figuras:
 
     figdir:str --> Diretório no qual se encontram as figuras.
     label:str --> nome comum a todas as figuras de um tipo específico.   
-    frase:str ou list[str] --> Frases que citam figuras. O local que conterá à referência às figuras deve estar com o token <ref>;
-        as palavras que flexionam em número deverão estar no singular, entre barras duplas (|palavra|).
-        Ex: "|A| <ref> |contém| referências à vítima".
-        Caso houver uma figura, a frase ficará: "A figura \ref{vit1} contém referências à vítima";
-        Caso houver duas figuras, a frase ficará: "As figuras \ref{vit1} e \ref{vit2} contêm referências à vítima";
-        Caso houver mais que duas figuras: "As figuras \ref{vit1} a \ref{vit2} contêm referências à vítima";
-        Caso a entrada for lista de strings, esta operação acima descrita será realizada sobre todos os itens.
     leg: str --> Legenda a ser utilizada.
 
+
+    Métodos:
+    
+    insertFigs() --> str:
+        Insere as figuras no texto, em formato latex.
+        Ex:
+            \f{les1.jpg}{Fotografia de lesão na vítima.}
+            \f{les2.jpg}{Fotograifa de lesão na vítima.}
+            ...
+    
+    textoFrase(str) --> str:
+        Insere uma frase que faz uma referência às figuras, flexionando em número, se houver mais de uma, e citando a referência.
+        O termo que flexiona em número deve estar no singular e entre barras, e a referência propriamente dita substituirá a tag '<ref>', inserida na string que é argumento deste método.
+        Ex.:
+            figLes.textoFrase('|A| |figura| <ref> |exibe| a(s) lesão(lesões) constatada(s) na vítima.')
+            Nenhuma figura retorna ''
+            Uma figura retorna 'A figura \ref{les1.jpg} exibe a(s) lesão(lesões) constatada(s) na vítima.'
+            Duas ou mais figuras retorna 'As figuras \ref{les1.jpg} a \ref{les5.jpg} exibem a(s) lesão(lesões) constatada(s) na vítima.'
     Outros parâmetros:
 
     ref: str --> String da referência à(s) figura(s);
-    figsTex:str --> String que insere as figuras no arquivo .tex;
     selectedFigs: List(str) --> Lista de strings com os nomes das figuras (sem extensão) que contém a string "label".
     """
 
@@ -47,7 +58,6 @@ class Figuras:
         self.figDir = figdir
         self.leg = leg
         self.label = label
-        self.figsTex = ""
 
         # Procurar figuras
         
@@ -80,14 +90,10 @@ class Figuras:
         match self.numFigs:
             case 0:
                 self.ref = ""
-                self.figsTex = ""
             case 1:
                 self.ref = ref(self.selectedFigs[0]) # Não usar self.label, pois a figura única poderá ser f"{label}.jpg", ou f"{label}1.jpg"
-                self.figsTex = f"\\f{{{self.selectedFigs[0]}}}{{{self.leg}}}"
             case _:
                 self.ref = f"{ref(self.label + '1')} e {ref(self.label + '2')}" if self.numFigs == 2 else f"{ref(self.label + '1')} a {ref(self.label + str(self.numFigs))}"
-                for num in range(1, self.numFigs + 1):
-                    self.figsTex += f"\\f{{{self.label}{num}}}{{{self.leg}}}\n"
                     
                     
     def textoFrase(self, frase:str):
@@ -104,6 +110,18 @@ class Figuras:
             case _:
                 return plural(frase.replace("<ref>", self.ref)) if type(frase) == str else [plural(item.replace("<ref>", self.ref)) for item in frase]
     
+    
+    def insertFigs(self):
+        """Este método retorna um texto, em LaTex, que insere as figuras selecionadas"""
+        
+        match self.numFigs:
+            case 0: return ''
+            case 1: return f"\\f{{{self.selectedFigs[0]}}}{{{self.leg}}}"
+            case _:
+                texto = ''
+                for num in range(1, self.numFigs + 1):
+                    texto += f"\\f{{{self.label}{num}}}{{{self.leg}}}\n"
+                return texto 
 
 class Servidor:
     
@@ -149,8 +167,6 @@ class Vitima:
     
     nicList = []
     
-    
-    # def __init__(self, nome:str, nic:int, tipoDoc:str, numDoc:str, dataNasc:datetime.date, idade:int, filiacao:str, sexo:str, arma:list[str] or str): EXCLUIR SE COM A LINHA ABAIXO DER CERTO
     def __init__(self, dic:dict):
     
         nic = dic.get("nic")
@@ -173,8 +189,8 @@ class Vitima:
             self.filiacao = input(f"{Bcolors.WARNING}O nome de um dos genitores da vítima NIC {self.nic} não foi inserido. Digite-o: {Bcolors.ENDC}")
         
         self.tipoDoc = dic.get("tipoDoc")
-        while self.tipoDoc.lower() not in ["rg", "cnh", "carteira de trabalho", "desconhecido"] and 'desconhec' not in self.nome.lower():
-            self.tipoDoc = input(f"{Bcolors.WARNING}O tipo do documento da vítima NIC {self.nic} não foi informado corretamente. Digite \"rg\", \"cnh\", \"carteira de trabalho\", ou \"desconhecido\". {Bcolors.ENDC}")
+        while self.tipoDoc.lower() not in ["rg", "cnh", "ctps", "carteira de trabalho", "desconhecido"] and 'desconhec' not in self.nome.lower():
+            self.tipoDoc = input(f"{Bcolors.WARNING}O tipo do documento da vítima NIC {self.nic} não foi informado corretamente. Digite \"rg\", \"cnh\", \"ctps\", \"carteira de trabalho\", ou \"desconhecido\". {Bcolors.ENDC}")
             
         self.numDoc = dic.get("numDoc")
         while self.numDoc in ["", None] and 'desconhec' not in self.nome.lower():
@@ -383,22 +399,22 @@ class Vitima:
         """)
         
     
-    def exames(self, figLencol, figVit, figVitMov, figTat, figId, figPert, figLes, figEsqLes, figBalVit):
+    def exames(self, *, figLencol, figVit, figVitMov, figBalVit, figTat, figRosto, figId, figPic, figBic, figPert, figLes, figEsqLes):
       
         texto = f"""
         \\subsection{{DO CADÁVER{'' if len(self.nicList) == 1 else ' ' + str(self.ordVit)}}}
 
         Ao chegar no local da ocorrência, a Equipe Técnica constatou a presença de um cadáver, que {figLencol.textoFrase('se encontrava envolto por um cobertor (|figura| <ref>). Após exposto, tal cadáver')} foi registrado em diferentes direções para permitir uma completa visualização da posição e condições iniciais em que foi encontrado. {figVit.textoFrase('|Esta| |fotografia| |está| |exibida| |na| |figura| <ref>:')}
 
-        {figVit.figsTex}
+        {figVit.insertFigs()}
 
         {figVitMov.textoFrase('Também |foi| |realizada| |fotografia| após a remoção da vítima até local adequado à Análise Perinecroscópica, conforme |figura| <ref>:')}
 
-        {figVitMov.figsTex}
+        {figVitMov.insertFigs()}
 
         {figBalVit.textoFrase('Após estes registros iniciais, foi procedida a manipulação do cadáver, durante a qual foi(foram) encontrado(s), sob ele, elemento(s) balístico(s), conforme |figura| <ref>:')}
 
-        {figBalVit.figsTex}
+        {figBalVit.insertFigs()}
         
         {figBalVit.textoFrase(r'Este(s) elemento(s) balístico(s) foi(foram) encaminhado(s) ao \bal.')}
 
@@ -406,14 +422,14 @@ class Vitima:
         
         \\subsubsection{{IDENTIFICAÇÃO}}
 
-        Mediante inspeção preliminar, foi constatado que este cadáver pertencia a um indivíduo do sexo {self.sexo.lower()}, tipo étnico {self.pele}, com cabelos ulótricos, {self.textoPelosFaciais() + ', ' if 'masc' in self.sexo.lower() else ''} de compleição normolínea, aparentando ter um metro e setenta centímetros de altura (1,70m)
-        {' e aproximadamente ' + self.idade + ' de idade' if self.idade != '' else ''} (figura {ref('rosto')}).
+        Mediante inspeção preliminar, foi constatado que este cadáver pertencia a um indivíduo do sexo {self.sexo.lower()}, tipo étnico {self.pele}, com cabelos {self.cabelo}, {self.textoPelosFaciais() + ', ' if 'masc' in self.sexo.lower() else ''} de compleição normolínea, aparentando ter um metro e setenta centímetros de altura (1,70m)
+        {' e aproximadamente ' + self.idade + ' de idade' if self.idade != '' else ''} {figRosto.textoFrase('(|figura| <ref>)')}.
 
-        \\f{{rosto}}{{Fotografia do rosto do cadáver.}}
+        {figRosto.insertFigs()}
 
         {figTat.textoFrase('Na sua epiderme |foi| |constatada| |tatuagem|, |fotografada| e |exibida| |na| |figura| <ref>:')}
 
-        {figTat.figsTex}
+        {figTat.insertFigs()}
         
         """
         
@@ -435,21 +451,21 @@ class Vitima:
         elif 'cnh' in self.tipoDoc.lower():
             texto += f"No momento dos exames periciais, foi apresentada a Carteira Nacional de Habilitação (CNH) do indivíduo cujo cadáver estava sob análise, constatando que seu nome era {textbf(self.nome)}, filho(a) de {self.filiacao}. Seu número do R.G. era {self.numDoc}, com nascimento em {self.dataNasc.strftime('%d/%m/%Y')}, possuindo, portanto, {self.idade} {figId.textoFrase(' (|figura| <ref>)')}."
         
-        elif 'ctps' in self.tipoDoc.lower():
+        elif self.tipoDoc.lower() in ['ctps', 'carteira de trabalho']:
             texto += f"No momento dos exames periciais, foi apresentada a Carteira de Trabalho e Previdência Social do indivíduo cujo cadáver estava sob análise, constatando que seu nome era {textbf(self.nome)}, filho(a) de {self.filiacao}. Seu número do R.G. era {self.numDoc}, com nascimento em {self.dataNasc.strftime('%d/%m/%Y')}, possuindo, portanto, {self.idade} {figId.textoFrase(' (|figura| <ref>)')}."
 
         
-        texto += f"\n\n{figId.figsTex}\n\nFoi atribuído ao cadáver o Número de Identificação Cadavérica (NIC) {self.nic}, colocada a Pulseira de Identificação Cadavérica (PIC) "
-        texto += r"""(figura \ref{pic}), e preenchido o Boletim de Identificação Cadavérica (BIC) (figura \ref{bic}).
-
-        \f{pic}{Fotografia da PIC colocada no cadáver.}
-        \f{bic}{Fotografia do BIC preenchido e encaminhado ao Instituto de Medicina Legal (IML).}
-        """
-
         texto += f"""
+        
+        {figId.insertFigs()}\n\nFoi atribuído ao cadáver o Número de Identificação Cadavérica (NIC) {self.nic}, colocada a Pulseira de Identificação Cadavérica (PIC) {figPic.textoFrase('(figura <ref>)')}, e preenchido o Boletim de Identificação Cadavérica (BIC) {figBic.textoFrase('(figura <ref>)')}.
+
+        {figPic.insertFigs()}
+        {figBic.insertFigs()}
+
+
         \\subsubsection{{VESTES E ACESSÓRIOS}}
          
-        O cadáver ora periciado trajava {self.vestimentas}, {'e estava descalço' if 'descalço' in self.calcados.lower() else 'e calçava ' + self.calcados}, conforme {figVitMov.textoFrase('(|figura| <ref>)') if figVitMov.numFigs != 0 else figVit.textoFrase('|figura| <ref>')}."""
+        O cadáver ora periciado trajava {self.vestimentas}, {'e estava descalço' if 'descalço' in self.calcados.lower() else 'e calçava ' + self.calcados}, conforme {figVitMov.textoFrase('|figura| <ref>') if figVitMov.numFigs != 0 else figVit.textoFrase('|figura| <ref>')}."""
 
         if figPert.numFigs > 0:
 
@@ -464,7 +480,7 @@ class Vitima:
             
             {figPert.textoFrase('|Foi| |feito| |registro| |fotográfico| destes itens, que estão exibidos |na| |figura| <ref>:')}
             
-            {figPert.figsTex}
+            {figPert.insertFigs()}
             
             """
         
@@ -503,13 +519,13 @@ class Vitima:
                 \\item Lesão similar àquelas provocadas por entrada de projétil na região auricular esquerda.
             \\end{{enumerate}}
             
-            {figLes.textoFrase('|A| |figura| <ref> |exibe| as lesões acima relatadas\n%,e |a| |numeração| |na| |imagem| |corresponde| |àquela| que |identifica| |a| |lesão| na lista acima:')}
+            {figLes.textoFrase('|A| |figura| <ref> |exibe| as lesões acima relatadas:\n%,e |a| |numeração| |na| |imagem| |corresponde| |àquela| que |identifica| |a| |lesão| na lista acima:\n')}
             
-            {figLes.figsTex}
+            {figLes.insertFigs()}
             
-            {figEsqLes.textoFrase(r'|A| |figura| <ref> |exibe|, através de |esquema|, as lesões encontradas no cadáver. Em |tal| |esquema|, as lesões representadas por um círculo são características de entrada de projétil, enquanto as representadas por um ``X'', saída de projétil, e, por fim, as indicadas por um quadrado não puderam ter suas características identificadas no momento do Exame Pericial.", "Esquema indicando os locais e tipos das lesões encontradas no cadáver. LEME, C-E-L. P. \textbf{Medicina Legal Prática Compreensível}. Barra do Garças: Ed. do Autor, 2010.')}
+            {figEsqLes.textoFrase(r'|A| |figura| <ref> |exibe|, através de |esquema|, as lesões encontradas no cadáver. Em |tal| |esquema|, as lesões representadas por um círculo são características de entrada de projétil, enquanto as representadas por um ``X'', saída de projétil, e, por fim, as indicadas por um quadrado não puderam ter suas características identificadas no momento do Exame Pericial.')}
             
-            {figEsqLes.figsTex}
+            {figEsqLes.insertFigs()}
 
             Tais lesões, bem como possivelmente outras que não foram encontradas quando da perícia no local, deverão ser adequadamente descritas e fotografadas quando da Perícia Tanatoscópica, a ser realizada por médicos legistas do Instituto de Medicina Legal Antônio Persivo Cunha - IML.
 

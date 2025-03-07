@@ -1,0 +1,14 @@
+babel-portuges
+setspace
+float
+geometry
+titlesec
+fancyhdr
+psnfss
+caption
+background
+everypage
+refcount
+ltxcmds
+infwarerr
+comment
